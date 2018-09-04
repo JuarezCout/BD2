@@ -6,7 +6,7 @@ public class Leitor {
     ByteBuffer buf = ByteBuffer.allocate(3);
     Container container = new Container();
 
-    public void iniciarLeitura(){
+    void iniciarLeitura(){
         System.out.println("Iniciando leitura do arquivo...");
 
         try {
@@ -14,7 +14,7 @@ public class Leitor {
 
             String linha = arquivo.readLine();
 
-            container.setControle(Bloco.criarBlocoControle(separador(linha)));
+            container.setControle(new Bloco(separador(linha)));
 
            /* while((linha = arquivo.readLine()) != null) {
 
@@ -28,7 +28,7 @@ public class Leitor {
         }
     }
 
-    public String[] separador(String linha){
+    String[] separador(String linha){
         return linha.split("\\|");
     }
 }

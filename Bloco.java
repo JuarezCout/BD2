@@ -1,16 +1,17 @@
 import java.nio.ByteBuffer;
 
 public class Bloco {
-	public byte[] dados = new byte[2048];
+	byte[] dados = new byte[2048];
 
-	public static Bloco criarBlocoControle(String[] linha) {
-		Bloco controle = new Bloco();
+	Bloco(String[] linha) {
+		byte[] aux = new byte[2048];
 
 
-		return controle;
+
+		this.dados = aux;
 	}
 
-	public int byteToInt(byte[] bytes) {
+	int byteToInt(byte[] bytes) {
 		byte[] result = new byte[4];
 
 		result[0] = 0;
@@ -23,7 +24,7 @@ public class Bloco {
 		return buf.getInt();
 	}
 
-	public byte[] intToByte(int i) {
+	byte[] intToByte(int i) {
 		ByteBuffer buf = ByteBuffer.allocate(4);
 		buf.putInt(i);
 
