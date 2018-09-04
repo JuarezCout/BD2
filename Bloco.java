@@ -5,7 +5,7 @@ public class Bloco {
 
 	Bloco(String[] linha) {
 		byte[] aux = new byte[2048];
-
+		byte[0] = 1;
 
 
 		this.dados = aux;
