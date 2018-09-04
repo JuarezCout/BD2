@@ -16,10 +16,10 @@ public class Leitor {
 
             container.setControle(new Bloco(linha));
 
-           /* while((linha = arquivo.readLine()) != null) {
+           while((linha = arquivo.readLine()) != null) {
 
-            }
-            */
+           }
+
 
             arquivo.close();
 

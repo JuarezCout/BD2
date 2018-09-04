@@ -19,14 +19,24 @@ public class Bloco {
 		this.dados = aux;
 	}
 
-	byte[] bytePlusbyte(byte[] valor1, byte[] valor2, int posicao){
+	static byte[] getBytes(byte[] dadosRecebidos, int posicaoInicial, int deslocamento){
+		byte[] bytes = new byte[deslocamento];
+
+		for(int i = posicaoInicial, j = 0; posicaoInicial < posicaoInicial + deslocamento; i++, j++){
+			bytes[j] = dadosRecebidos[i];
+		}
+
+		return bytes;
+	}
+
+	static byte[] bytePlusbyte(byte[] valor1, byte[] valor2, int posicao){
 		for(int i = posicao, j = 0; j < valor2.length; i++, j++){
 			valor1[i] = valor2[j];
 		}
 		return valor1;
 	}
 
-	int byteToInt(byte[] bytes) {
+	static int byteToInt(byte[] bytes) {
 		byte[] result = new byte[4];
 
 		result[0] = 0;
@@ -39,7 +49,7 @@ public class Bloco {
 		return buf.getInt();
 	}
 
-	byte[] intToByte(int i) {
+	static byte[] intToByte(int i) {
 		ByteBuffer buf = ByteBuffer.allocate(4);
 		buf.putInt(i);
 
@@ -53,7 +63,7 @@ public class Bloco {
 		return result;
 	}
 
-	byte[] intTo2Byte(int i) {
+	static byte[] intTo2Byte(int i) {
 		ByteBuffer buf = ByteBuffer.allocate(4);
 		buf.putInt(i);
 
@@ -64,5 +74,18 @@ public class Bloco {
 		result[1] = bytes[3];
 
 		return result;
+	}
+
+	static int byte2ToInt(byte[] bytes) {
+		byte[] result = new byte[4];
+
+		result[0] = 0;
+		result[1] = 0;
+		result[2] = bytes[0];
+		result[3] = bytes[1];
+
+		ByteBuffer buf = ByteBuffer.wrap(result);
+
+		return buf.getInt();
 	}
 }

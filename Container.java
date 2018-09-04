@@ -5,6 +5,14 @@ public class Container {
     Bloco controle;
     List<Bloco> blocos = new ArrayList<Bloco>();
 
+    public void encontrarBlocoLivre(){
+
+    }
+
+    /* public int getColumsNumber() {
+        controle.getBytes(9, )
+    }*/
+
     public Bloco getControle() {
         return controle;
     }
