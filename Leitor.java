@@ -15,6 +15,7 @@ public class Leitor {
             String linha = arquivo.readLine();
 
             container.setControle(new Bloco(linha));
+            System.out.println("teste " + Bloco.byteToInt(Bloco.getBytes(container.controle.dados, 5, 3)));
 
            while((linha = arquivo.readLine()) != null) {
                 adicionarTupla(Tupla.montaTuplaByte(separador(linha)));
@@ -31,10 +32,14 @@ public class Leitor {
     void adicionarTupla(byte[] tupla) {
         int idBlocoLivre = Bloco.byteToInt(Bloco.getBytes(container.controle.dados, 5, 3));
 
+        System.out.println(container.encontrarBlocoPorId(idBlocoLivre));
+
         if(idBlocoLivre == 0) {
             Bloco novo = new Bloco(1);
             novo.adicionarTuplaNoBloco(tupla);
             container.blocos.add(novo);
+            System.out.println(tupla.length);
+            System.out.println(Bloco.byteToInt(Bloco.getBytes(novo.dados, 5, 3)));
             container.atualizaIdLivreControle(1);
         } else {
             if(container.encontrarBlocoPorId(idBlocoLivre).getTamanhoBloco() > tupla.length) {

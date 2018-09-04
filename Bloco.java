@@ -9,6 +9,9 @@ public class Bloco {
 
 		aux[0] = 1;
 		aux = bytePlusbyte(aux, intToByte(idBloco), 1);
+		System.out.println(aux[1]);
+		System.out.println(aux[2]);
+		System.out.println(aux[3]);
 		aux[4] = 0;
 		aux = bytePlusbyte(aux, intToByte(0), 5);
 
@@ -21,7 +24,7 @@ public class Bloco {
 		aux[0] = 1;
 		aux = bytePlusbyte(aux, intToByte(tamanho), 1);
 		aux[4] = 0;
-		aux = bytePlusbyte(aux, intToByte(8),5);
+		aux = bytePlusbyte(aux, intToByte(0),5);
 
 		byte[] linhaByte = linha.getBytes();
 		aux = bytePlusbyte(aux, intTo2Byte(linhaByte.length), 9);
@@ -32,13 +35,13 @@ public class Bloco {
 
 	void adicionarTuplaNoBloco(byte[] tupla) {
 		int bytesUsados = byteToInt(getBytes(this.dados, 5, 3));
-		bytePlusbyte(this.dados, tupla, bytesUsados);
+		this.dados = bytePlusbyte(this.dados, tupla, bytesUsados);
 
 		setBytes(intToByte(bytesUsados + tupla.length), 5, 3);
 	}
 
 	int getTamanhoBloco() {
-		return byteToInt(getBytes(this.dados, 5, 3));
+		return byteToInt(getBytes(dados, 5, 3));
 	}
 
 	static byte[] getBytes(byte[] dadosRecebidos, int posicaoInicial, int deslocamento){
@@ -53,12 +56,12 @@ public class Bloco {
 
 	void setBytes(byte[] dadosRecebidos, int posicaoInicial, int deslocamento){
 		for(int i = posicaoInicial, j = 0; i < posicaoInicial + deslocamento; i++, j++){
-			this.dados[j] = dadosRecebidos[i];
+			dados[i] = dadosRecebidos[j];
 		}
 	}
 
 	static byte[] bytePlusbyte(byte[] valor1, byte[] valor2, int posicao){
-		for(int i = posicao, j = 0; j < valor2.length; i++, j++){
+		for(int i = posicao, j = 0; i < valor2.length + posicao; i++, j++){
 			valor1[i] = valor2[j];
 		}
 		return valor1;
