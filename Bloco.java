@@ -20,7 +20,7 @@ public class Bloco {
 	}
 
 	byte[] bytePlusbyte(byte[] valor1, byte[] valor2, int posicao){
-		for(int i = posicao, j = 0; i < i + valor2.length; i++, j++){
+		for(int i = posicao, j = 0; j < valor2.length; i++, j++){
 			valor1[i] = valor2[j];
 		}
 		return valor1;
