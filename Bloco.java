@@ -1,14 +1,29 @@
 import java.nio.ByteBuffer;
 
 public class Bloco {
-	byte[] dados = new byte[2048];
+	int tamanho = 2048;
+	byte[] dados;
 
-	Bloco(String[] linha) {
+	Bloco(String linha) {
 		byte[] aux = new byte[2048];
-		byte[0] = 1;
 
+		aux[0] = 1;
+		aux = bytePlusbyte(aux, intToByte(tamanho), 1);
+		aux[4] = 0;
+		aux = bytePlusbyte(aux, intToByte(0),5);
+
+		byte[] linhaByte = linha.getBytes();
+		aux = bytePlusbyte(aux, intTo2Byte(linhaByte.length), 9);
+		aux = bytePlusbyte(aux, linhaByte, 11);
 
 		this.dados = aux;
+	}
+
+	byte[] bytePlusbyte(byte[] valor1, byte[] valor2, int posicao){
+		for(int i = posicao, j = 0; i < i + valor2.length; i++, j++){
+			valor1[i] = valor2[j];
+		}
+		return valor1;
 	}
 
 	int byteToInt(byte[] bytes) {
@@ -34,6 +49,19 @@ public class Bloco {
 		result[0] = bytes[1];
 		result[1] = bytes[2];
 		result[2] = bytes[3];
+
+		return result;
+	}
+
+	byte[] intTo2Byte(int i) {
+		ByteBuffer buf = ByteBuffer.allocate(4);
+		buf.putInt(i);
+
+		byte[] bytes = buf.array();
+
+		byte[] result = new byte[2];
+		result[0] = bytes[2];
+		result[1] = bytes[3];
 
 		return result;
 	}

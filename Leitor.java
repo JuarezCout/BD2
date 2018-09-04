@@ -14,7 +14,7 @@ public class Leitor {
 
             String linha = arquivo.readLine();
 
-            container.setControle(new Bloco(separador(linha)));
+            container.setControle(new Bloco(linha));
 
            /* while((linha = arquivo.readLine()) != null) {
 
