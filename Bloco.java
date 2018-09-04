@@ -1,49 +1,39 @@
-package estruturas;
-
 import java.nio.ByteBuffer;
-import java.util.Random;
 
 public class Bloco {
-	
-	public static final int tamanho = 2048;
-	public static int idContainer = 0;
-	public int idBloco;
-	public int tipoBloco;
-	public int byteUsado;
-	public byte[] dados;
-	
-	Random gerador = new Random();
-	byte[] bloco;
+	public byte[] dados = new byte[2048];
 
-	public Bloco(byte[] bloco) {
-		super();
-		idBloco = gerador.nextInt(999);
-		tipoBloco = 0;
-	    byteUsado = 8;
-	    dados = new byte[tamanho];
+	public static Bloco criarBlocoControle(String[] linha) {
+		Bloco controle = new Bloco();
 
-	    //ID do Container(Arquivo de Dados)
-	    dados[0] = (byte) idContainer;
-	    //ID do Bloco
-	    byte[] bytes = ByteBuffer.allocate(3).putInt(idBloco).array();
-	    int i = 1;
-	    int j = 0;
-	    while (i < 4) {
-	    	dados[i] = bytes[j];
-	    	i++; j++;
-		}
-	    //Tipo do Bloco
-	    dados[4] = (byte) 0; //Sem uso
-	    //Controle de quais bytes estão em uso / Próximo Byte livre
-	    bytes = ByteBuffer.allocate(3).putInt(byteUsado).array();
-	    i = 5;
-	    j = 0;
-	    while (i < 8) {
-	    	dados[i] = bytes[j];
-	    	i++; j++;
-		}
+
+		return controle;
 	}
-	
-	
 
+	public int byteToInt(byte[] bytes) {
+		byte[] result = new byte[4];
+
+		result[0] = 0;
+		result[1] = bytes[0];
+		result[2] = bytes[1];
+		result[3] = bytes[2];
+
+		ByteBuffer buf = ByteBuffer.wrap(result);
+
+		return buf.getInt();
+	}
+
+	public byte[] intToByte(int i) {
+		ByteBuffer buf = ByteBuffer.allocate(4);
+		buf.putInt(i);
+
+		byte[] bytes = buf.array();
+
+		byte[] result = new byte[3];
+		result[0] = bytes[1];
+		result[1] = bytes[2];
+		result[2] = bytes[3];
+
+		return result;
+	}
 }
