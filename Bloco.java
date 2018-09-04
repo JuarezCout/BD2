@@ -5,7 +5,7 @@ public class Bloco {
 	byte[] dados;
 
 	Bloco(String linha) {
-		byte[] aux = new byte[2048];
+		byte[] aux = new byte[tamanho];
 
 		aux[0] = 1;
 		aux = bytePlusbyte(aux, intToByte(tamanho), 1);
