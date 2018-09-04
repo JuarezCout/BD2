@@ -17,7 +17,7 @@ public class Leitor {
             container.setControle(new Bloco(linha));
 
            while((linha = arquivo.readLine()) != null) {
-                Tupla.montaTuplaByte(separador(linha));
+                adicionarTupla(Tupla.montaTuplaByte(separador(linha)));
            }
 
 
@@ -25,6 +25,26 @@ public class Leitor {
 
         } catch (IOException exp) {
             exp.printStackTrace();
+        }
+    }
+
+    void adicionarTupla(byte[] tupla) {
+        int idBlocoLivre = Bloco.byteToInt(Bloco.getBytes(container.controle.dados, 5, 3));
+
+        if(idBlocoLivre == 0) {
+            Bloco novo = new Bloco(1);
+            novo.adicionarTuplaNoBloco(tupla);
+            container.blocos.add(novo);
+            container.atualizaIdLivreControle(1);
+        } else {
+            if(container.encontrarBlocoPorId(idBlocoLivre).getTamanhoBloco() > tupla.length) {
+                container.encontrarBlocoPorId(idBlocoLivre).adicionarTuplaNoBloco(tupla);
+            } else {
+                Bloco novo = new Bloco(idBlocoLivre + 1);
+                novo.adicionarTuplaNoBloco(tupla);
+                container.blocos.add(novo);
+                container.atualizaIdLivreControle(idBlocoLivre + 1);
+            }
         }
     }
 
