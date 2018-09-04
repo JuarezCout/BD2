@@ -22,7 +22,7 @@ public class Bloco {
 	static byte[] getBytes(byte[] dadosRecebidos, int posicaoInicial, int deslocamento){
 		byte[] bytes = new byte[deslocamento];
 
-		for(int i = posicaoInicial, j = 0; posicaoInicial < posicaoInicial + deslocamento; i++, j++){
+		for(int i = posicaoInicial, j = 0; i < posicaoInicial + deslocamento; i++, j++){
 			bytes[j] = dadosRecebidos[i];
 		}
 

@@ -9,10 +9,6 @@ public class Container {
 
     }
 
-    /* public int getColumsNumber() {
-        controle.getBytes(9, )
-    }*/
-
     public Bloco getControle() {
         return controle;
     }

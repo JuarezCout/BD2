@@ -2,9 +2,7 @@
 
 public class Tupla {
 
-	byte[] dados;
-
-	byte[] montaTuplaByte(String[] linha){
+	static byte[] montaTuplaByte(String[] linha){
 		byte[] tupla = new byte[4];
 
 		for(int i = 0; i < linha.length; i++) {
@@ -24,7 +22,7 @@ public class Tupla {
 
 	}
 
-	int somaTotalBytes(byte[] tupla, byte[] coluna) {
+	static int somaTotalBytes(byte[] tupla, byte[] coluna) {
 		int totalTupla = Bloco.byteToInt(Bloco.getBytes(tupla,0, 4));
 		int totalColuna = Bloco.byte2ToInt(Bloco.getBytes(coluna,0, 2));
 

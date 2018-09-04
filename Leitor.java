@@ -17,7 +17,7 @@ public class Leitor {
             container.setControle(new Bloco(linha));
 
            while((linha = arquivo.readLine()) != null) {
-
+                Tupla.montaTuplaByte(separador(linha));
            }
 
 
