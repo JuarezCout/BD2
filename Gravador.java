@@ -11,7 +11,7 @@ public class Gravador {
 
         bytes = Bloco.bytePlusbyte(bytes, container.controle.dados, 0);
 
-        for(int i = 0, j = 2048; i < container.blocos.size(); i++, j += 2048 ) {
+        for(int i = 0, j = 0; i < container.blocos.size(); i++, j += 2048 ) {
             bytes = Bloco.bytePlusbyte(bytes, container.blocos.get(i).dados, j);
         }
 
