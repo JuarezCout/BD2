@@ -1,7 +1,6 @@
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Path;
 
 public class Gravador {
     public static void salvaArquivo(Container container) {
@@ -19,7 +18,7 @@ public class Gravador {
 
         FileOutputStream stream = null;
         try {
-            stream = new FileOutputStream("output/bd.txt");
+            stream = new FileOutputStream("C:\\Users\\Rodrigo\\IdeaProjects\\BD2\\output\\bd.txt");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }

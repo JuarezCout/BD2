@@ -9,9 +9,6 @@ public class Bloco {
 
 		aux[0] = 1;
 		aux = bytePlusbyte(aux, intToByte(idBloco), 1);
-		System.out.println(aux[1]);
-		System.out.println(aux[2]);
-		System.out.println(aux[3]);
 		aux[4] = 0;
 		aux = bytePlusbyte(aux, intToByte(8), 5);
 

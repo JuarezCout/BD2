@@ -15,7 +15,6 @@ public class Leitor {
             String linha = arquivo.readLine();
 
             container.setControle(new Bloco(linha));
-            System.out.println("teste " + Bloco.byteToInt(Bloco.getBytes(container.controle.dados, 5, 3)));
 
            while((linha = arquivo.readLine()) != null) {
                 adicionarTupla(Tupla.montaTuplaByte(separador(linha)));
@@ -24,6 +23,8 @@ public class Leitor {
 
             arquivo.close();
 
+           Gravador.salvaArquivo(container);
+
         } catch (IOException exp) {
             exp.printStackTrace();
         }
@@ -31,20 +32,20 @@ public class Leitor {
 
     void adicionarTupla(byte[] tupla) {
         int idBlocoLivre = Bloco.byteToInt(Bloco.getBytes(container.controle.dados, 5, 3));
-
-        System.out.println(container.encontrarBlocoPorId(idBlocoLivre));
+        System.out.println(idBlocoLivre);
 
         if(idBlocoLivre == 0) {
             Bloco novo = new Bloco(1);
             novo.adicionarTuplaNoBloco(tupla);
             container.blocos.add(novo);
-            System.out.println(tupla.length);
-            System.out.println(Bloco.byteToInt(Bloco.getBytes(novo.dados, 5, 3)));
             container.atualizaIdLivreControle(1);
         } else {
-            if(container.encontrarBlocoPorId(idBlocoLivre).getTamanhoBloco() > tupla.length) {
+            int size = container.encontrarBlocoPorId(idBlocoLivre).getTamanhoBloco();
+            if(container.tamanhoDoBloco() - container.encontrarBlocoPorId(idBlocoLivre).getTamanhoBloco() > tupla.length) {
+                System.out.println("idmaiorq"+idBlocoLivre+"tamanho"+container.encontrarBlocoPorId(idBlocoLivre).getTamanhoBloco());
                 container.encontrarBlocoPorId(idBlocoLivre).adicionarTuplaNoBloco(tupla);
             } else {
+                System.out.println("idmenorq"+idBlocoLivre+"tamanho"+container.encontrarBlocoPorId(idBlocoLivre).getTamanhoBloco());
                 Bloco novo = new Bloco(idBlocoLivre + 1);
                 novo.adicionarTuplaNoBloco(tupla);
                 container.blocos.add(novo);
