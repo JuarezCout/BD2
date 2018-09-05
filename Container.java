@@ -8,7 +8,10 @@ public class Container {
     public Bloco encontrarBlocoPorId(int id){
         for(int i = 0; i < blocos.size(); i++) {
             Bloco b = blocos.get(i);
-            System.out.println("for " + Bloco.byteToInt(Bloco.getBytes(b.dados, 1, 3)));
+            System.out.println("for " + b.dados[0]);
+            System.out.println("for " + b.dados[1]);
+            System.out.println("for " + b.dados[2]);
+            System.out.println("for " + b.dados[3]);
             if (id == Bloco.byteToInt(Bloco.getBytes(b.dados, 1, 3))){
                 return b;
             }

@@ -13,7 +13,7 @@ public class Bloco {
 		System.out.println(aux[2]);
 		System.out.println(aux[3]);
 		aux[4] = 0;
-		aux = bytePlusbyte(aux, intToByte(0), 5);
+		aux = bytePlusbyte(aux, intToByte(8), 5);
 
 		this.dados = aux;
 	}
