@@ -117,4 +117,10 @@ public class Bloco {
 
 		return buf.getInt();
 	}
+
+	static String byteToString(byte[] bytes){
+
+	    return new String(bytes);
+
+    }
 }
