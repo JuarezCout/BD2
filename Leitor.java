@@ -10,6 +10,7 @@ public class Leitor {
         System.out.println("Iniciando leitura do arquivo...");
 
         try {
+            //RandomAccessFile arquivo = new RandomAccessFile("C:\\Users\\Rodrigo\\Desktop\\forn-tpch.txt", "rw");
             RandomAccessFile arquivo = new RandomAccessFile("C:\\Users\\Juarez Coutinho\\Desktop\\forn-tpch.txt", "rw");
 
             String linha = arquivo.readLine();
