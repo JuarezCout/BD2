@@ -38,9 +38,9 @@ public class Gravador {
 
     public static void exportaArquivoTxt(Container container) {
         //Declarações
-        byte[] tuplaByte, auxEntrada;
-        int controle = 8, controleTupla;
-        int tamTupla,  tamEntrada;
+        byte[] tuplaByte, auxEntrada = new byte[4];
+        int controle = 8, controleTupla = 0;
+        int tamTupla,  tamEntrada = 0;
         String dados;
 
         // Retorna em um HashMap as colunas e seus tipo de dados
@@ -51,30 +51,44 @@ public class Gravador {
 
             while (controle < Bloco.byteToInt(Bloco.getBytes(bloco.dados, 5, 3))){
                 // Calcula o espaço ocupado pela tupla no bloco
-                tamTupla  = Bloco.byteToInt(Bloco.getBytes(bloco.dados, controle, 4));
+                tamTupla  = Bloco.byteToInt(Bloco.getBytes(bloco.dados, controle, 4)) + 2*metaDados.size() + 1;
 
                 //Pega os dados da tupla
                 controle += 4;
                 tuplaByte = Bloco.getBytes(bloco.dados, controle, tamTupla);
 
-                //Divide por cada dado na tuplaByte e salva em String
-                tamEntrada = (Bloco.getBytes(tuplaByte, 4, 2)).length;
-                auxEntrada = new byte[tamEntrada];
-                controleTupla = 6;
-                for (int i = 6, j = 0; i < tamTupla; i++, j++){
-                    if (i == tamEntrada+controleTupla){
-                        //Teste
-                        dados = new String(auxEntrada);
-                        System.out.println(dados + "/n");
+                for (int i = 0, j = 0; i < tamTupla; i++, j++){
 
-                        //Atualização do Controle
-                        controleTupla += tamEntrada;
-                        tamEntrada = Bloco.byte2ToInt(Bloco.getBytes(tuplaByte, controleTupla, 2));
-                        auxEntrada = new byte[tamEntrada];
-                        i++;
-                        j = 0;
+                    if (i == tamEntrada+controleTupla){
+                        if (i != 0){
+                            //Teste
+                            dados = new String(auxEntrada);
+                            System.out.println(dados);
+
+                            //Atualização do Controle
+                            controleTupla += tamEntrada;
+//                            tamEntrada = Bloco.byte2ToInt(Bloco.getBytes(tuplaByte, controleTupla, 2));
+//                            auxEntrada = new byte[tamEntrada];
+                            auxEntrada = new byte[4];
+                             i = controleTupla - 1;
+                            j = 0;
+                        }
+
+                    } else {
+                        auxEntrada[j] = tuplaByte[i];
                     }
-                    auxEntrada[j] = tuplaByte[i];
+
+                    //Divide por cada dado na tuplaByte e salva em String
+                    if (auxEntrada.length == 0){
+                        if (i < tamTupla - 1){
+                            tamEntrada = Bloco.byte2ToInt(Bloco.getBytes(tuplaByte, controleTupla, 2));
+                            auxEntrada = new byte[tamEntrada];
+                            i = controleTupla + 1;
+                            j = -1;
+                            controleTupla += 2;
+                        }
+                    }
+
                 }
 
                 controle = controle + tamTupla;
