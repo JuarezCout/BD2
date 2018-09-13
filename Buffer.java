@@ -1,3 +1,7 @@
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
 public class Buffer {
     private static int[] lru =  new int[40],  memoria =  new int[40];
 
@@ -5,9 +9,32 @@ public class Buffer {
 
     private static int idCall, idBuff, controle, pontoMud;
 
+    public static void geraRequisicoes(Container container){
+        List<Bloco> blocosRepetidos = new ArrayList<Bloco>();
+        Random rand = new Random();
+        int idContainer, idBloco;
+        int ultimoId = 0;
+
+        for(Bloco bloco : container.blocos) {
+            idContainer = bloco.dados[0];
+            idBloco = Bloco.byteToInt(Bloco.getBytes(bloco.dados, 1, 3));
+
+            if(idBloco != ultimoId) {
+                int repeticoes = rand.nextInt(10) + 1;
+
+                for(int i = 1; i <= repeticoes; i++){
+                    blocosRepetidos.add(new Bloco(idBloco, (byte) idContainer));
+                }
+                ultimoId = idBloco;
+            }
+        }
+
+        executaBuffer(container, blocosRepetidos);
+    }
 
 
-    public static int[] executaBuffer (Container container){
+
+    public static int[] executaBuffer (Container container, List<Bloco> blocosRepetidos){
         int pos = 0;
 
         for (Bloco blocoCall : container.blocos)

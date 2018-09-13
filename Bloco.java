@@ -5,10 +5,10 @@ public class Bloco {
 	byte[] dados;
 
 	//cria bloco normal
-	Bloco(int idBloco) {
+	Bloco(int idBloco, byte idContainer) {
 		byte[] aux = new byte[tamanho];
 
-		aux[0] = 1; //id do container
+		aux[0] = idContainer; //id do container
 		aux = bytePlusbyte(aux, intToByte(idBloco), 1); //id do bloco
 		aux[4] = 0; //status do container
 		aux = bytePlusbyte(aux, intToByte(8), 5); //tamanho do bloco

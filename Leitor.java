@@ -3,15 +3,14 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 
 public class Leitor {
-    ByteBuffer buf = ByteBuffer.allocate(3);
     Container container = new Container();
 
     void iniciarLeitura(){
         System.out.println("Iniciando leitura do arquivo...");
 
         try {
-            //RandomAccessFile arquivo = new RandomAccessFile("C:\\Users\\Rodrigo\\Desktop\\forn-tpch.txt", "rw");
-            RandomAccessFile arquivo = new RandomAccessFile("C:\\Users\\Juarez Coutinho\\Desktop\\forn-tpch.txt", "rw");
+            RandomAccessFile arquivo = new RandomAccessFile("C:\\Users\\Rodrigo\\Desktop\\forn-tpch.txt", "rw");
+            //RandomAccessFile arquivo = new RandomAccessFile("C:\\Users\\Juarez Coutinho\\Desktop\\forn-tpch.txt", "rw");
 
             String linha = arquivo.readLine();
 
@@ -37,7 +36,7 @@ public class Leitor {
         int idBlocoLivre = Bloco.byteToInt(Bloco.getBytes(container.controle.dados, 5, 3));
         //se nao exitir bloco, deve ser criado
         if(idBlocoLivre == 0) {
-            Bloco novo = new Bloco(1);
+            Bloco novo = new Bloco(1, (byte) 1);
             System.out.println("Gerado bloco de ID: " + 1);
             novo.adicionarTuplaNoBloco(tupla);
             container.blocos.add(novo);
@@ -49,7 +48,7 @@ public class Leitor {
                 container.encontrarBlocoPorId(idBlocoLivre).adicionarTuplaNoBloco(tupla);
             } else { //bloco menor que tamanho da tupla
                // System.out.println("idmenorq"+idBlocoLivre+"tamanho"+container.encontrarBlocoPorId(idBlocoLivre).getTamanhoBloco());
-                Bloco novo = new Bloco(idBlocoLivre + 1);
+                Bloco novo = new Bloco(idBlocoLivre + 1, (byte)1);
                 System.out.println("Gerado bloco de ID: " + (idBlocoLivre + 1));
                 novo.adicionarTuplaNoBloco(tupla);
                 container.blocos.add(novo);

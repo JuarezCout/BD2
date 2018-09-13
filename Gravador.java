@@ -1,6 +1,7 @@
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.HashMap;
 
 public class Gravador {
@@ -41,32 +42,39 @@ public class Gravador {
         byte[] tuplaByte, auxEntrada = new byte[3];
         int controle = 8, controleTupla = 0;
         int tamTupla,  tamEntrada = 0;
+        int idContainer, idBloco;
+        String text = "";
         String dados;
 
         // Retorna em um HashMap as colunas e seus tipo de dados
         HashMap<Integer, String> metaDados = headerTabela(container.controle);
 
+
         //Ler Blocos, e dentro dos blocos ler as tuplas e começar a salvar esses strings em uma grande string pra salvar no TXT
         for (Bloco bloco: container.blocos) {
+            idContainer = bloco.dados[0];
+            idBloco = Bloco.byteToInt(Bloco.getBytes(bloco.dados, 1, 3));
 
             while (controle < Bloco.byteToInt(Bloco.getBytes(bloco.dados, 5, 3))){
+                text += String.valueOf(idContainer) + "|" + String.valueOf(idBloco) + "|";
                 // Calcula o espaço ocupado pela tupla no bloco
-                tamTupla  = Bloco.byteToInt(Bloco.getBytes(bloco.dados, controle, 4)) + 2*metaDados.size() + 1;
+                tamTupla = Bloco.byteToInt(Bloco.getBytes(bloco.dados, controle, 4)) + 2*metaDados.size();
 
                 //Pega os dados da tupla
                 controle += 4;
                 tuplaByte = Bloco.getBytes(bloco.dados, controle, tamTupla);
 
-                for (int i = 0, j = 0; i < tamTupla; i++, j++){
+                for (int i = 0, j = 0; i < tamTupla + 1; i++, j++){
 
                     if (i == tamEntrada+controleTupla){
 
                         if (i != 0){
                             //Teste
                             dados = new String(auxEntrada);
+                            text += dados + "|" ;
                             System.out.println(dados);
 
-                            if (i  == tamTupla-1) break;
+                            if (i  == tamTupla-1 || i == tamTupla) break;
                             //Atualização do Controle
                             controleTupla += tamEntrada;
                             tamEntrada = Bloco.byte2ToInt(Bloco.getBytes(tuplaByte, controleTupla, 2));
@@ -92,13 +100,24 @@ public class Gravador {
 
 
                 }
-
+                text += "\n";
+                auxEntrada = new byte[3];
+                controleTupla = 0;
+                tamEntrada = 0;
                 controle = controle + tamTupla;
             }
 
-            controle = Bloco.byteToInt(Bloco.getBytes(bloco.dados,8, 2));
+            controle = 8;
         }
 
+        //grava dados no arquivo
+        try {
+            PrintWriter out = new PrintWriter("C:\\Users\\Rodrigo\\IdeaProjects\\BD2\\output\\blocos.txt");
+            out.println(text);
+            out.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
 
     }
 
