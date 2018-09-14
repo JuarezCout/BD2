@@ -5,8 +5,9 @@ import java.util.Random;
 public class GerenciadorBuffer {
 
     //Declaração
-    private LRU lruTeste = new LRU();
-    private Buffer bufferTeste = new Buffer();
+    private LRU lruTeste = new LRU(20);
+    private Buffer bufferTeste = new Buffer(20);
+    private Pagina paginaTeste = new Pagina();
 
     private static int[] lru =  new int[40],  memoria =  new int[40];
 
