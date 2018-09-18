@@ -1,7 +1,7 @@
 import java.nio.ByteBuffer;
 
 public class Bloco {
-	int tamanho = 2048;
+	int tamanho = 8192;
 	byte[] dados;
 
 	//cria bloco normal
@@ -16,10 +16,10 @@ public class Bloco {
 		this.dados = aux;
 	}
 	//cria bloco controle
-	Bloco(String linha) {
+	Bloco(String linha, byte idContainer) {
 		byte[] aux = new byte[tamanho];
 
-		aux[0] = 1;//id do container
+		aux[0] = idContainer;//id do container
 		aux = bytePlusbyte(aux, intToByte(tamanho), 1);//tamanho do bloco
 		aux[4] = 0; //status do container
 		aux = bytePlusbyte(aux, intToByte(0),5); //id do proximo bloco livre

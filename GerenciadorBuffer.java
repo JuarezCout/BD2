@@ -3,7 +3,7 @@ import java.util.List;
 import java.util.Random;
 
 public class GerenciadorBuffer {
-
+/*
     //Declaração
     private LRU lruTeste = new LRU(20);
     private Buffer bufferTeste = new Buffer(20);
@@ -108,5 +108,5 @@ public class GerenciadorBuffer {
         vecLru[vecLru.length - 1] = idNovo;
 
         return vecLru;
-    }
+    }*/
 }

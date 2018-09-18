@@ -2,8 +2,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Container {
+    static int containerId = 0;
     Bloco controle;
     List<Bloco> blocos = new ArrayList<Bloco>();
+
+    Container(String linha){
+        containerId++;
+        controle = new Bloco(linha, (byte) containerId);
+    }
 
     public Bloco encontrarBlocoPorId(int id){
         for(int i = 0; i < blocos.size(); i++) {
@@ -14,6 +20,11 @@ public class Container {
         }
         return null;
     }
+
+    public byte getContainerId(){
+        return  controle.dados[0];
+    }
+
 
     public void atualizaIdLivreControle(int id) {
         controle.setBytes(Bloco.intToByte(id), 5, 3);
