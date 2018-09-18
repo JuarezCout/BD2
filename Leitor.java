@@ -7,13 +7,13 @@ public class Leitor {
     public static List<Container> containers = new ArrayList<Container>();
 
     void criaContainers(){
-//        String arquivo1 = "C:\\Users\\Rodrigo\\Desktop\\forn-tpch.txt";
-//        String arquivo2 = "C:\\Users\\Rodrigo\\Desktop\\cli-tpch.txt";
-        String arquivo1 = "C:\\Users\\Juarez Coutinho\\Desktop\\forn-tpch.txt";
-        String arquivo2 = "C:\\Users\\Juarez Coutinho\\Desktop\\cli-tpch.txt";
+        String arquivo1 = "C:\\Users\\Rodrigo\\Desktop\\forn-tpch.txt";
+        String arquivo2 = "C:\\Users\\Rodrigo\\Desktop\\cli-tpch.txt";
+        //String arquivo1 = "C:\\Users\\Juarez Coutinho\\Desktop\\forn-tpch.txt";
+        //String arquivo2 = "C:\\Users\\Juarez Coutinho\\Desktop\\cli-tpch.txt";
 
         iniciarLeitura(arquivo1);
-        iniciarLeitura(arquivo2);
+        //iniciarLeitura(arquivo2);
 
         System.out.println("Containers criados");
 
