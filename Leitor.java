@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Leitor {
-    List<Container> containers = new ArrayList<Container>();
+    public static List<Container> containers = new ArrayList<Container>();
 
     void criaContainers(){
         String arquivo1 = "C:\\Users\\Rodrigo\\Desktop\\forn-tpch.txt";
@@ -16,6 +16,8 @@ public class Leitor {
         iniciarLeitura(arquivo2);
 
         System.out.println("Containers criados");
+
+
 
         //Gravador.exportaArquivoTxt(containers);
 
