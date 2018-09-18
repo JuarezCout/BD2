@@ -169,13 +169,12 @@ public class GerenciadorBuffer {
                     break;
                 }
                 aux[0] = vecLru[i];
-                for(int j = 0; j < vecLru.length - espacoLivre; j++){
-                    if(i == j){
-                        aux[j + 1] = vecLru[j + 1];
-                        j++;
-                    } else {
-                        aux[j + 1] = vecLru[j];
+                for(int j = 0, g = 0; j < vecLru.length - espacoLivre - 1; j++, g++){
+                    if(vecLru[i].getFileID() == vecLru[j].getFileID() && vecLru[i].getBlocoID() == vecLru[j].getBlocoID()){
+                        //aux[j + 1] = vecLru[j + 1];
+                        g++;
                     }
+                    aux[j + 1] = vecLru[g];
                 }
                 break;
             }
@@ -228,7 +227,7 @@ public class GerenciadorBuffer {
         }
 
         //buffer sem espaco livre
-        Pagina ultimoLRU = lru.getLru()[lru.getLru().length];
+        Pagina ultimoLRU = lru.getLru()[lru.getLru().length - 1];
 
         vecBuffer[ultimoLRU.getPos()] = blocoNovo ;
 
