@@ -11,7 +11,7 @@ public class GerenciadorBuffer {
 
     private static int[] cacheHitMiss = new int[3];
 
-    private static int idBloco, idCont, idBuff, idRequisicaoCont, idRequisicaoBloco, controle, pontoMud;
+    private static int idBloco, idCont, idBuff, idRequisicaoCont, idRequisicaoBloco, controle = -1, pontoMud;
 
     public static void geraRequisicoes(){
         List<Pagina> paginasRepetidas = new ArrayList<Pagina>();
@@ -53,7 +53,8 @@ public class GerenciadorBuffer {
     }    
 
     public static int[] executaBuffer (List<Pagina> paginasReq){
-        int pos = 0;
+        int posLRU = 0;
+        int posBuff = 0;
         Bloco blocoArq;
         
         for (Pagina pagina : paginasReq) {
@@ -61,35 +62,73 @@ public class GerenciadorBuffer {
             idRequisicaoCont  = pagina.getFileID();
             idRequisicaoBloco = pagina.getBlocoID();
 
+            System.out.println("Buscando o bloco: " + idRequisicaoCont + "-" + idRequisicaoBloco);
+            System.out.println();
+
+            //Qtd de chamadas do buffer
+            cacheHitMiss[2]++;
+
+            if (buffer.getBuffer()[0] == null) {
+
+                //Pega bloco requisitado do arquivo
+                blocoArq = buscaBlocoArquivo(pagina);
+
+                //Atualiza Memoria
+                buffer.setBuffer(substituiVetorBuffer(buffer.getBuffer(), 0, blocoArq));
+
+                //Implementar LRU
+                lru.setLru(ordenaVetorLRU(lru.getLru(), 0, 0, pagina));
+
+                //Add Miss
+                cacheHitMiss[1]++;
+                System.out.println("Miss: " + cacheHitMiss[1]);
+
+                continue;
+
+            }
 
             for (Bloco blocoBuff : buffer.getBuffer()) {
-                //Qtd de chamadas do buffer
-                cacheHitMiss[2]++;
-
-                if (idRequisicaoCont  == Bloco.byteToInt(Bloco.getBytes(blocoBuff.dados, 0, 1)) &&
+                controle++;
+                //Verificação de existência do Bloco no buffer
+                if (idRequisicaoCont  == blocoBuff.dados[0]  &&
                     idRequisicaoBloco == Bloco.byteToInt(Bloco.getBytes(blocoBuff.dados, 1, 3))) {
                     //add Hit
                     cacheHitMiss[0]++;
+                    System.out.println("Hit: " + cacheHitMiss[0]);
 
                     //Implementar LRU
-                    lru.setLru(ordenaVetorLRU(lru.getLru(), controle, pagina));
+                    lru.setLru(ordenaVetorLRU(lru.getLru(), controle, controle, pagina));
+
+                    continue;
                 } else {
 
                     //Pega bloco requisitado do arquivo
                     blocoArq = buscaBlocoArquivo(pagina);
 
-                    //Implementar LRU
-                    pos = 0;
-                    lru.setLru(ordenaVetorLRU(lru.getLru(), pos, pagina));
+                    //Pega posicao do Buffer que vai sair de acordo com a LRU
+                    if (lru.getLru().length != 20) {
+                        posBuff = lru.getLru().length;
+                    } else {
+                        posBuff = pegaPosicaoBuffer(lru.getLru(), idRequisicaoBloco, idRequisicaoCont);
+                    }
 
                     //Atualiza Memoria
-                    buffer.setBuffer(ordenaVetorBuffer(buffer.getBuffer(), pos, blocoArq));
+                    if (buffer.getBuffer().length == 20){
+                        buffer.setBuffer(substituiVetorBuffer(buffer.getBuffer(), posBuff, blocoArq));
+                    } else{
+                        buffer.setBuffer(substituiVetorBuffer(buffer.getBuffer(), buffer.getBuffer().length, blocoArq));
+                    }
+
+                    //Implementar LRU
+                    posLRU = 0;
+                    lru.setLru(ordenaVetorLRU(lru.getLru(), posLRU, posBuff, pagina));
 
                     //Add Miss
                     cacheHitMiss[1]++;
-                }
+                    System.out.println("Miss: " + cacheHitMiss[1]);
 
-                controle++;
+                    continue;
+                }
             }
 
         }
@@ -97,7 +136,7 @@ public class GerenciadorBuffer {
         return cacheHitMiss;
     }
 
-    public static Pagina[] ordenaVetorLRU(Pagina[] vecLru, int posicaoMudanca, Pagina pgNovo){
+    public static Pagina[] ordenaVetorLRU(Pagina[] vecLru, int posicaoMudanca, int posiBuffer, Pagina pgNovo){
         Pagina[] auxLru = vecLru;
 
         vecLru[posicaoMudanca] = null;
@@ -105,21 +144,30 @@ public class GerenciadorBuffer {
         for (int i = posicaoMudanca, j = posicaoMudanca + 1; j < vecLru.length; i++, j++) {
             vecLru[i] = auxLru[j];
         }
+        pgNovo.setPos(posiBuffer);
         vecLru[vecLru.length - 1] = pgNovo;
 
         return vecLru;
     }
 
-    public static Bloco[] ordenaVetorBuffer(Bloco[] vecBuffer, int posicaoMudanca, Bloco blNovo){
+    public static Bloco[] substituiVetorBuffer(Bloco[] vecBuffer, int posicaoMudanca, Bloco blNovo){
         Bloco[] auxBuffer = vecBuffer;
 
         vecBuffer[posicaoMudanca] = null;
 
-        for (int i = posicaoMudanca, j = posicaoMudanca + 1; j < vecBuffer.length; i++, j++) {
-            vecBuffer[i] = auxBuffer[j];
-        }
-        vecBuffer[vecBuffer.length - 1] = blNovo;
+        vecBuffer[posicaoMudanca] = blNovo;
 
         return vecBuffer;
+    }
+
+    public static int pegaPosicaoBuffer (Pagina[] lru, int idBloco, int idCont){
+
+        for (Pagina pagina : lru ) {
+            if (pagina.getFileID() == idCont && pagina.getBlocoID() == idBloco){
+                return pagina.getPos();
+            }
+        }
+
+        return 0;
     }
 }
