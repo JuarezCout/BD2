@@ -13,7 +13,7 @@ public class Leitor {
         //String arquivo2 = "C:\\Users\\Juarez Coutinho\\Desktop\\cli-tpch.txt";
 
         iniciarLeitura(arquivo1);
-        //iniciarLeitura(arquivo2);
+        iniciarLeitura(arquivo2);
 
         System.out.println("Containers criados");
 
@@ -58,13 +58,13 @@ public class Leitor {
             container.atualizaIdLivreControle(1);
         } else { //bloco maior que tamanho da tupla
             if(container.tamanhoDoBloco() - container.encontrarBlocoPorId(idBlocoLivre).getTamanhoBloco() > tupla.length) {
-                System.out.println("Salvou tupla no bloco: " + idBlocoLivre);
+                //System.out.println("Salvou tupla no bloco: " + idBlocoLivre);
                // System.out.println("idmaiorq"+idBlocoLivre+"tamanho"+container.encontrarBlocoPorId(idBlocoLivre).getTamanhoBloco());
                 container.encontrarBlocoPorId(idBlocoLivre).adicionarTuplaNoBloco(tupla);
             } else { //bloco menor que tamanho da tupla
                // System.out.println("idmenorq"+idBlocoLivre+"tamanho"+container.encontrarBlocoPorId(idBlocoLivre).getTamanhoBloco());
                 Bloco novo = new Bloco(idBlocoLivre + 1, container.getContainerId());
-                System.out.println("Gerado bloco de ID: " + (idBlocoLivre + 1));
+                //System.out.println("Gerado bloco de ID: " + (idBlocoLivre + 1));
                 novo.adicionarTuplaNoBloco(tupla);
                 container.blocos.add(novo);
                 container.atualizaIdLivreControle(idBlocoLivre + 1);

@@ -1,12 +1,13 @@
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.text.DecimalFormat;
 
 public class GerenciadorBuffer {
 
     //Declaração
-    private static LRU lru = new LRU(20);
-    private static Buffer buffer = new Buffer(20);
+    private static LRU lru = new LRU(680);
+    private static Buffer buffer = new Buffer(680);
 
 
     private static int[] cacheHitMiss = new int[3];
@@ -25,13 +26,18 @@ public class GerenciadorBuffer {
                 Pagina p = new Pagina(idContainer, idBloco, 0);
 
                 if(idBloco % 2 == 0){
-                    int aleatorio = rand.nextInt(paginasRepetidas.size());
-                    paginasRepetidas.add(paginasRepetidas.get(aleatorio));
+                    int repeticoes = rand.nextInt(paginasRepetidas.size());
+
+                    for(int i = 1; i <= 3; i++){
+                        paginasRepetidas.add(paginasRepetidas.get(repeticoes));
+                    }
+
+
                 }
 
                 int repeticoes = rand.nextInt(2) + 1;
 
-                for(int i = 1; i <= repeticoes; i++){
+                for(int i = 1; i <= 3; i++){
                     paginasRepetidas.add(p);
                 }
 
@@ -39,6 +45,22 @@ public class GerenciadorBuffer {
         }
 
         executaBuffer(paginasRepetidas);
+
+
+    }
+
+    public static void exibirResultados() {
+        DecimalFormat df = new DecimalFormat("#.##");
+        System.out.println("Tamanho da Memória: 	" + lru.getLru().length);
+        System.out.println("Quantidade de Paginas requisitadas:	" + cacheHitMiss[2]);
+        System.out.println("Cache Hit: 		" + cacheHitMiss[0]);
+        System.out.println("Cache Miss: 		" + cacheHitMiss[1]);
+        System.out.println("Taxa de Hit:		"
+                + df.format(((double) cacheHitMiss[0] / cacheHitMiss[2]) * 100) + "%");
+        System.out
+                .println("Taxa de Miss:		"
+                        + df.format(((double) cacheHitMiss[1] / cacheHitMiss[2]) * 100)
+                        + "%");
     }
 
     public static Bloco buscaBlocoArquivo (Pagina pagina){
@@ -134,6 +156,7 @@ public class GerenciadorBuffer {
 
         }
 
+        exibirResultados();
         return cacheHitMiss;
     }
 
