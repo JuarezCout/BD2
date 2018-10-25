@@ -5,5 +5,6 @@ public class App {
         Leitor leitor = new Leitor();
         leitor.criaContainers();
         //GerenciadorBuffer.geraRequisicoes(leitor.container);
+        Interface.render(args);
     }
 }
