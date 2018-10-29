@@ -13,15 +13,20 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Interface extends Application {
+    List<ListView> listas = new ArrayList<ListView>();
+    Bloco[] bucketsMemoria = new Bloco[20];
+    int numeroTabelas = getNumeroTabelas();
+
     public static void render(String args[]) {
         launch(args);
     }
 
     @Override
     public void start(Stage stage) {
-        int numeroTabelas = getNumeroTabelas();
-
         GridPane gridPane = new GridPane();
 
         for(int i = 0; i < numeroTabelas; i++ ){
@@ -31,6 +36,7 @@ public class Interface extends Application {
             ListView<String> listaColunas = new ListView<String>(colunas);
             listaColunas.setPrefHeight(colunas.size() * 24 + 2);
             listaColunas.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+            listas.add(listaColunas);
 
             if(i == 0) {
                 gridPane.add(tableLabel, i, i);
@@ -73,14 +79,30 @@ public class Interface extends Application {
     }
 
     public void handleExecutar() {
-        System.out.println("Hi there! You clicked me!");
+        int[][] selecoes = getSelecoes();
+        GerenciadorBucket gereciadorBucket = new GerenciadorBucket(numeroTabelas);
     }
+
+
+    private int[][] getSelecoes() {
+        int[][] selecoes = new int[4][10];
+
+        for(int i = 0; i < numeroTabelas; i++ ){
+           ObservableList<Integer> selecoesTabela = listas.get(i).getSelectionModel().getSelectedIndices();
+           for(int j = 0; j < selecoesTabela.size(); j++){
+               selecoes[i][j] = selecoesTabela.get(j);
+           }
+        }
+
+        return selecoes;
+    }
+
 
     public int getNumeroTabelas(){
         return Leitor.containers.size();
     }
 
-    public String[] getNomeColunas(int numTabela){
+    String[] getNomeColunas(int numTabela){
         Container container = Leitor.containers.get(numTabela);
         byte[] blocoControle = container.getControle().dados;
         int deslocamentoLinha = Bloco.byte2ToInt(Bloco.getBytes(blocoControle, 9, 2));

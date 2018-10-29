@@ -74,7 +74,88 @@ public class GerenciadorBuffer {
         }
 
         return null;
-    }    
+    }
+
+    public static Bloco getBlocoBuffer (Pagina paginaReq){
+        Bloco blocoArq;
+
+
+            //Pega HowID do Bloco requisitado
+            idRequisicaoCont  = paginaReq.getFileID();
+            idRequisicaoBloco = paginaReq.getBlocoID();
+            int status = 0;
+
+            System.out.println("Buscando o bloco: " + idRequisicaoCont + "-" + idRequisicaoBloco);
+            System.out.println();
+
+            //Qtd de chamadas do buffer
+            cacheHitMiss[2]++;
+            //verifica se buffer esta vazio
+            if (buffer.getBuffer()[0] == null) {
+
+                //Pega bloco requisitado do arquivo
+                blocoArq = buscaBlocoArquivo(paginaReq);
+
+                //Atualiza Memoria
+                buffer.setBuffer(substituiVetorBuffer(buffer.getBuffer(), 0, blocoArq));
+
+                //Implementar LRU
+                adicionaPaginaLRU(paginaReq);
+                //lru.setLru(ordenaVetorLRU(lru.getLru(), 0, 0, paginaReq));
+
+                //Add Miss
+                cacheHitMiss[1]++;
+                System.out.println("Miss: " + cacheHitMiss[1]);
+
+                return blocoArq;
+
+            }
+            //procura bloco no buffer
+            for (Bloco blocoBuff : buffer.getBuffer()) {
+                controle++;
+
+                if(blocoBuff == null){
+                    break;
+                }
+
+                //Verificação de existência do Bloco no buffer
+                if (idRequisicaoCont  == blocoBuff.dados[0]  &&
+                        idRequisicaoBloco == Bloco.byteToInt(Bloco.getBytes(blocoBuff.dados, 1, 3))) {
+                    //add Hit
+                    cacheHitMiss[0]++;
+                    System.out.println("Hit: " + cacheHitMiss[0]);
+
+                    //Implementar LRU
+                    ordenaLRU(paginaReq);
+                    //lru.setLru(ordenaVetorLRU(lru.getLru(), controle, controle, paginaReq));
+                    status = 1;
+                    return blocoBuff;
+                }
+            }
+
+            if(status == 0) {//bloco não encontrado no buffer
+
+                //Pega bloco requisitado do arquivo
+                blocoArq = buscaBlocoArquivo(paginaReq);
+
+                paginaReq = adicionaBlocoBuffer(blocoArq, paginaReq);
+
+                //Implementar LRU
+                adicionaPaginaLRU(paginaReq);
+                //lru.setLru(ordenaVetorLRU(lru.getLru(), posLRU, posBuff, paginaReq));
+
+                //Add Miss
+                cacheHitMiss[1]++;
+                System.out.println("Miss: " + cacheHitMiss[1]);
+
+                status = 0;
+                return blocoArq;
+            }
+            status = 0;
+
+
+        return null;
+    }
 
     public static int[] executaBuffer (List<Pagina> paginasReq){
         int posLRU = 0;

@@ -31,6 +31,14 @@ public class Bloco {
 		this.dados = aux;
 	}
 
+	int getId() {
+		return byteToInt(getBytes(dados, 1, 3));
+	}
+
+	int getIdTabela() {
+		return dados[0];
+	}
+
 	void adicionarTuplaNoBloco(byte[] tupla) {
 		int bytesUsados = byteToInt(getBytes(this.dados, 5, 3));
 		this.dados = bytePlusbyte(this.dados, tupla, bytesUsados);
