@@ -89,11 +89,10 @@ public class Interface extends Application {
             for(int j = 1; j < 1000000000; j++){
                 pagina = new Pagina(i + 1, j, 0);
                 Bloco bloco = GerenciadorBuffer.getBlocoBuffer(pagina);
-                executaHash(bloco, i);
-
                 if(bloco == null) {
                     break;
                 }
+                executaHash(bloco, i);
             }
         }
 
@@ -107,12 +106,11 @@ public class Interface extends Application {
         while(tamBloco > i){ // percorre as tuplas do bloco
             int totalHash = 0;
             int numColuna = 0;
-            int tamTupla = Bloco.byteToInt(Bloco.getBytes(bloco.dados, i, 3));
+            int tamTupla = Bloco.byteToInt(Bloco.getBytes(bloco.dados, i , 3));
             int[] selecoesDaTabela = selecoes.get(idTabela);
             int h = i + 4;
 
-            while(tamTupla > h) { //percorre colunas da tupla
-                int tamColuna = Bloco.byte2ToInt(Bloco.getBytes(bloco.dados, h, 2));
+            while(tamTupla + i > h) { //percorre colunas da tupla
 
                 for (int j = 0; j < selecoesDaTabela.length; j++) {
                     if (numColuna == selecoesDaTabela[j]) {
@@ -121,13 +119,14 @@ public class Interface extends Application {
                     }
                 }
 
+                int tamColuna = Bloco.byte2ToInt(Bloco.getBytes(bloco.dados, h, 2));
                 h += tamColuna + 2;
                 numColuna++;
             }
 
             byte[] dadosTupla = Bloco.getBytes(bloco.dados, i, tamTupla);
             gereciadorBucket.adicionarTupla(dadosTupla, totalHash, idTabela);
-            i += tamTupla;
+            i += tamTupla + numColuna*2 + 4 ;
         }
     }
 
@@ -138,7 +137,7 @@ public class Interface extends Application {
             totalHash += dados[i];
         }
 
-        return totalHash % 5;
+        return totalHash % 3;
     }
 
 
