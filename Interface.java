@@ -14,12 +14,15 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class Interface extends Application {
     List<ListView> listas = new ArrayList<ListView>();
+    HashMap<Integer, int []> selecoes = new HashMap<>();
     Bloco[] bucketsMemoria = new Bloco[20];
     int numeroTabelas = getNumeroTabelas();
+    GerenciadorBucket gereciadorBucket = new GerenciadorBucket(numeroTabelas);
 
     public static void render(String args[]) {
         launch(args);
@@ -79,22 +82,76 @@ public class Interface extends Application {
     }
 
     public void handleExecutar() {
-        int[][] selecoes = getSelecoes();
-        GerenciadorBucket gereciadorBucket = new GerenciadorBucket(numeroTabelas);
+        getSelecoes();
+        Pagina pagina;
+
+       for(int i = 0; i < numeroTabelas; i++){
+            for(int j = 1; j < 1000000000; j++){
+                pagina = new Pagina(i + 1, j, 0);
+                Bloco bloco = GerenciadorBuffer.getBlocoBuffer(pagina);
+                executaHash(bloco, i);
+
+                if(bloco == null) {
+                    break;
+                }
+            }
+        }
+
+
+    }
+
+    void executaHash(Bloco bloco, int idTabela) {
+        int i = 8;
+        int tamBloco = Bloco.byteToInt(Bloco.getBytes(bloco.dados, 5, 3));
+
+        while(tamBloco > i){ // percorre as tuplas do bloco
+            int totalHash = 0;
+            int numColuna = 0;
+            int tamTupla = Bloco.byteToInt(Bloco.getBytes(bloco.dados, i, 3));
+            int[] selecoesDaTabela = selecoes.get(idTabela);
+            int h = i + 4;
+
+            while(tamTupla > h) { //percorre colunas da tupla
+                int tamColuna = Bloco.byte2ToInt(Bloco.getBytes(bloco.dados, h, 2));
+
+                for (int j = 0; j < selecoesDaTabela.length; j++) {
+                    if (numColuna == selecoesDaTabela[j]) {
+                        byte[] dados = Bloco.getBytes(bloco.dados, h + 2, 4);
+                        totalHash += funcaoHash(dados);
+                    }
+                }
+
+                h += tamColuna + 2;
+                numColuna++;
+            }
+
+            byte[] dadosTupla = Bloco.getBytes(bloco.dados, i, tamTupla);
+            gereciadorBucket.adicionarTupla(dadosTupla, totalHash, idTabela);
+            i += tamTupla;
+        }
+    }
+
+    int funcaoHash(byte[] dados){
+        int totalHash = 0;
+
+        for(int i = 0; i < dados.length; i++){
+            totalHash += dados[i];
+        }
+
+        return totalHash % 5;
     }
 
 
-    private int[][] getSelecoes() {
-        int[][] selecoes = new int[4][10];
+    private void getSelecoes() {
 
         for(int i = 0; i < numeroTabelas; i++ ){
            ObservableList<Integer> selecoesTabela = listas.get(i).getSelectionModel().getSelectedIndices();
+           int[] selecoesDaTabela = new int[selecoesTabela.size()];
            for(int j = 0; j < selecoesTabela.size(); j++){
-               selecoes[i][j] = selecoesTabela.get(j);
+               selecoesDaTabela[j] = selecoesTabela.get(j);
            }
+           selecoes.put(i, selecoesDaTabela);
         }
-
-        return selecoes;
     }
 
 

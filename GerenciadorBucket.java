@@ -10,7 +10,7 @@ public class GerenciadorBucket {
         for (int i = 0; i < numTabelas; i++){
             try {
                 FileOutputStream out = new FileOutputStream("C:\\Users\\Rodrigo\\IdeaProjects\\BD2\\output\\bucketstorage-"+i+".txt");
-                Bloco bucket0 = new Bloco("", (byte) i);
+                Bloco bucket0 = new Bloco(0, (byte) i);
                 out.write(bucket0.dados);
                 buckets.add(bucket0);
             } catch (IOException e) {
@@ -18,6 +18,7 @@ public class GerenciadorBucket {
             }
         }
     }
+
 
     void adicionarTupla(byte[] tupla, int hash, int idTabela){
         //procurar bucket na memoria
@@ -45,7 +46,7 @@ public class GerenciadorBucket {
                     novoArquivo = Bloco.bytePlusbyte(novoArquivo, arquivo, posicaoGravacao + tupla.length);
                     setArquivoBytes(novoArquivo, idTabela);
                     break;
-                } else {
+                } else { // bucket nao existe
                     Bloco novoBucket = new Bloco(hash, (byte) idTabela);
                     novoBucket.adicionarTuplaNoBloco(tupla);
                     adicionaBucket(novoBucket, idTabela);
@@ -87,11 +88,16 @@ public class GerenciadorBucket {
     int procuraBucketDisco(int idTabela, int hash){
         byte[] arquivo = getArquivoBytes(idTabela);
         int i = 0;
+
         while(i < arquivo.length) {
             if(Bloco.byteToInt(Bloco.getBytes(arquivo, i+1, 3)) == hash) {
                 return i;
             }
             i += Bloco.byteToInt(Bloco.getBytes(arquivo, i+5, 3));
+
+            if(arquivo.length == 8192) {
+                return 0;
+            }
         }
 
         return 0;
@@ -101,6 +107,7 @@ public class GerenciadorBucket {
         try {
             FileOutputStream out = new FileOutputStream("C:\\Users\\Rodrigo\\IdeaProjects\\BD2\\output\\bucketstorage-"+idTabela+".txt");
             out.write(arquivo);
+            out.close();
         } catch (IOException e) {
             e.printStackTrace();
         }

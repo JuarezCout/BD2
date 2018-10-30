@@ -1,3 +1,4 @@
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
@@ -12,8 +13,10 @@ public class Leitor {
         //String arquivo1 = "C:\\Users\\Juarez Coutinho\\Desktop\\forn-tpch.txt";
         //String arquivo2 = "C:\\Users\\Juarez Coutinho\\Desktop\\cli-tpch.txt";
 
+
         iniciarLeitura(arquivo1);
         iniciarLeitura(arquivo2);
+
 
         System.out.println("Containers criados");
 
