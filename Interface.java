@@ -20,7 +20,6 @@ import java.util.List;
 public class Interface extends Application {
     List<ListView> listas = new ArrayList<ListView>();
     HashMap<Integer, int []> selecoes = new HashMap<>();
-    Bloco[] bucketsMemoria = new Bloco[20];
     int numeroTabelas = getNumeroTabelas();
     GerenciadorBucket gereciadorBucket = new GerenciadorBucket(numeroTabelas);
 
@@ -96,6 +95,7 @@ public class Interface extends Application {
             }
         }
 
+        gereciadorBucket.comparaBuckects(selecoes);
 
     }
 

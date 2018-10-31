@@ -1,5 +1,6 @@
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class GerenciadorBucket {
     int limitBucketsMemory = 10;
@@ -18,6 +19,126 @@ public class GerenciadorBucket {
                 e.printStackTrace();
             }
         }
+    }
+
+    ArrayList<String[]> comparaBuckects(HashMap<Integer, int []> selecoes){
+        ArrayList<String[]> resultados = new ArrayList<>();
+
+        System.out.println("Iniciando comparações de buckets...");
+
+        for(int i = 0; i < buckets.size(); i++){
+            Bloco bucket = buckets.get(i);
+
+            if(bucket.getIdTabela() == 0){
+                resultados.addAll(comparaBucketCorrespondente(selecoes, bucket));
+            }
+        }
+
+        byte[] arquivo = getArquivoBytes(0);
+
+        int i = 0;
+
+        while(i < arquivo.length) {
+            byte idContainer = arquivo[i];
+            int idBloco = Bloco.byteToInt(Bloco.getBytes(arquivo, i + 1, 3));
+            Bloco bucket = new Bloco(idBloco, idContainer);
+
+            bucket.dados = Bloco.getBytes(arquivo, i, Bloco.byteToInt(Bloco.getBytes(arquivo, i + 5, 3)));
+            resultados.addAll(comparaBucketCorrespondente(selecoes, bucket));
+
+            i += Bloco.byteToInt(Bloco.getBytes(arquivo, i + 5, 3));
+        }
+
+        return resultados;
+    }
+
+    ArrayList<String[]> comparaBucketCorrespondente(HashMap<Integer,int[]> selecoes, Bloco bucket) {
+        boolean bucketEncontrado = false;
+        Bloco bucket2 = null;
+        // procura bucket correspondente na memoria
+        for(int i = 0; i < buckets.size(); i++){
+            bucket2 = buckets.get(i);
+
+            if(bucket2.getIdTabela() == 1 && bucket2.getId() == bucket.getId()){
+                bucketEncontrado = true;
+                break;
+            }
+            bucket2 = null;
+        }
+        // procura bucket correspondente no disco
+        if(bucketEncontrado == false){
+            bucket2 = getBucketDisco(1, bucket.getId());
+        }
+
+        if(bucket2 != null){
+            return comparaLinhas(selecoes, bucket, bucket2);
+        }
+        return null;
+    }
+
+    ArrayList<String[]> comparaLinhas(HashMap<Integer,int[]> selecoes, Bloco bucket, Bloco bucket2) {
+        int i = 8;
+        int tamBucket = bucket.getTamanhoBloco();
+        int tamBucket2 = bucket2.getTamanhoBloco();
+        ArrayList<String> linha1 = new ArrayList<>();
+        ArrayList<String> linha2 = new ArrayList<>();
+        ArrayList<String[]> resultados = new ArrayList<>();
+
+        while(i < tamBucket){//percorre bucket
+            int tamTupla = Bloco.byteToInt(Bloco.getBytes(bucket.dados, i , 3));
+            int numColuna = 0;
+            int h = i + 4;
+
+            while(h < tamTupla + i){//percorre tupla
+                int tamColuna = Bloco.byte2ToInt(Bloco.getBytes(bucket.dados, h, 2));
+                String coluna = Bloco.byteToString(Bloco.getBytes(bucket.dados, h + 2, tamColuna));
+                linha1.add(coluna);
+                numColuna++;
+                h += tamColuna + 2;
+            }
+            i += tamTupla + numColuna*2 + 4;
+
+            int numColuna2 = 0;
+            int j = 8;
+            while(j < tamBucket2){//percorre bucket
+                int tamTupla2 = Bloco.byteToInt(Bloco.getBytes(bucket2.dados, j , 3));
+                int h2 = i + 4;
+
+                while(h2 < tamTupla2 + i){//percorre tupla
+                    int tamColuna2 = Bloco.byte2ToInt(Bloco.getBytes(bucket2.dados, h2, 2));
+                    String coluna2 = Bloco.byteToString(Bloco.getBytes(bucket2.dados, h2 + 2, tamColuna2));
+                    linha2.add(coluna2);
+                    numColuna2++;
+                    h2 += tamColuna2 + 2;
+                }
+                resultados = combinaLinha(linha1, linha2, selecoes, resultados);
+                linha1 = new ArrayList<>();
+                linha2 = new ArrayList<>();
+                j += tamTupla2 + numColuna2*2 + 4;
+            }
+        }
+        return resultados;
+    }
+
+    ArrayList<String[]> combinaLinha(ArrayList<String> linha1, ArrayList<String> linha2, HashMap<Integer,int[]> selecoes, ArrayList<String[]> resultados) {
+        int[] selecoes1 = selecoes.get(0);
+        int[] selecoes2 = selecoes.get(1);
+        int igualdades = 0;
+
+        for(int i = 0; i < selecoes1.length; i++){
+            if(linha1.get(selecoes1[i]) == linha2.get(selecoes2[i])){
+                igualdades++;
+            }
+        }
+
+        if(igualdades == selecoes1.length){
+            linha1.addAll(linha2);
+            String[] resultado = new String[linha1.size()];
+            resultado = linha1.toArray(resultado);
+            resultados.add(resultado);
+        }
+
+        return resultados;
     }
 
 
@@ -128,6 +249,22 @@ public class GerenciadorBucket {
         } else {
             return false;
         }
+    }
+
+    Bloco getBucketDisco(int idTabela, int hash){
+        int bucketPosition = procuraBucketDisco(idTabela, hash);
+
+        if(bucketPosition != 0) {
+            byte[] arquivo = getArquivoBytes(idTabela);
+            int bytesUsados = Bloco.byteToInt(Bloco.getBytes(arquivo, bucketPosition + 5, 3));
+            Bloco bloco = new Bloco(hash, (byte) idTabela);
+            byte[] dadosBucket = Bloco.getBytes(arquivo, bucketPosition, bytesUsados);
+            bloco.dados = dadosBucket;
+
+            return bloco;
+        }
+
+        return null;
     }
 
     int procuraBucketDisco(int idTabela, int hash){
