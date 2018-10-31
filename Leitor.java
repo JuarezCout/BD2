@@ -19,8 +19,7 @@ public class Leitor {
 
         System.out.println("Containers criados");
 
-        System.out.println("/n/n/n");
-        System.out.println("TESTE BUFFER/n/n/n");
+        
         //GerenciadorBuffer.geraRequisicoes();
         //Gravador.exportaArquivoTxt(containers);
 

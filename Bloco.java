@@ -49,7 +49,8 @@ public class Bloco {
 	void adicionarTuplaNoBlocoCheio(byte[] tupla) {
 		int bytesUsados = byteToInt(getBytes(this.dados, 5, 3));
 		byte[] novosBytes = new byte[bytesUsados + tupla.length];
-		novosBytes = bytePlusbyte(novosBytes, dados, 0);
+		byte[] bytesDados = getBytes(dados, 0 , bytesUsados);
+		novosBytes = bytePlusbyte(novosBytes, bytesDados, 0);
 		novosBytes = bytePlusbyte(novosBytes, tupla, bytesUsados);
 
 		this.dados = bytePlusbyte(novosBytes, intToByte(bytesUsados + tupla.length), 5);

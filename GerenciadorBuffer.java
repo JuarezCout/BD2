@@ -105,7 +105,7 @@ public class GerenciadorBuffer {
 
                 //Add Miss
                 cacheHitMiss[1]++;
-                System.out.println("Miss: " + cacheHitMiss[1]);
+                //System.out.println("Miss: " + cacheHitMiss[1]);
 
                 return blocoArq;
 
@@ -123,7 +123,7 @@ public class GerenciadorBuffer {
                         idRequisicaoBloco == Bloco.byteToInt(Bloco.getBytes(blocoBuff.dados, 1, 3))) {
                     //add Hit
                     cacheHitMiss[0]++;
-                    System.out.println("Hit: " + cacheHitMiss[0]);
+                    //System.out.println("Hit: " + cacheHitMiss[0]);
 
                     //Implementar LRU
                     ordenaLRU(paginaReq);
@@ -146,7 +146,7 @@ public class GerenciadorBuffer {
 
                 //Add Miss
                 cacheHitMiss[1]++;
-                System.out.println("Miss: " + cacheHitMiss[1]);
+                //System.out.println("Miss: " + cacheHitMiss[1]);
 
                 status = 0;
                 return blocoArq;

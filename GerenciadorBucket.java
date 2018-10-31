@@ -11,7 +11,8 @@ public class GerenciadorBucket {
             try {
                 FileOutputStream out = new FileOutputStream("C:\\Users\\Rodrigo\\IdeaProjects\\BD2\\output\\bucketstorage-"+i+".txt");
                 Bloco bucket0 = new Bloco(0, (byte) i);
-                out.write(bucket0.dados);
+                byte[] dadosBucket = Bloco.getBytes(bucket0.dados, 0, 8);
+                out.write(dadosBucket);
                 buckets.add(bucket0);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -25,26 +26,34 @@ public class GerenciadorBucket {
         //procurar bucket na memoria
         for (int i = 0; i < buckets.size(); i++ ) {
             Bloco bucket = buckets.get(i);
+
+            // hash deu bucket 0
+            if(bucket.getIdTabela() == idTabela && bucket.getId() == hash && hash == 0){
+                bucket.adicionarTuplaNoBlocoCheio(tupla);
+                bucketEncontrado = true;
+                break;
+            }
             //se bucket estiver na memoria e com espaco livre
-            if (bucket.getId() == hash && Bloco.byteToInt(Bloco.getBytes(bucket.dados, 5, 3)) + tupla.length < limitBlockSize) {
+            if (bucket.getIdTabela() == idTabela && bucket.getId() == hash && Bloco.byteToInt(Bloco.getBytes(bucket.dados, 5, 3)) + tupla.length < limitBlockSize) {
                 bucket.adicionarTuplaNoBloco(tupla);
                 bucketEncontrado = true;
                 break;
-            } else if(hash == 0){ // hash deu bucket 0
+            }
+            //bucket na memoria mas cheio
+            if(bucket.getIdTabela() == idTabela && bucket.getId() == hash){
+                System.out.println("Bucket "+ bucket.getId() + " da tabela " + idTabela + " ficou cheio e foi movido para disco");
                 bucket.adicionarTuplaNoBlocoCheio(tupla);
-                bucketEncontrado = true;
-                break;
-            } else if(bucket.getId() == hash){ //bucket na memoria mas cheio
-                System.out.println("Bucket "+ bucket.getId() + " estava cheio e foi movido para disco");
-                bucket.adicionarTuplaNoBlocoCheio(tupla);
+
                 int bytesUsados = Bloco.byteToInt(Bloco.getBytes(bucket.dados, 5, 3));
+                byte[] bytesBucket = Bloco.getBytes(bucket.dados, 0 , bytesUsados);
                 byte[] arquivo = getArquivoBytes(idTabela);
                 byte[] novoArquivo = new byte[arquivo.length + bytesUsados];
                 novoArquivo = Bloco.bytePlusbyte(novoArquivo, arquivo, 0);
-                novoArquivo = Bloco.bytePlusbyte(novoArquivo, bucket.dados, arquivo.length);
+                novoArquivo = Bloco.bytePlusbyte(novoArquivo, bytesBucket, arquivo.length);
                 buckets.remove(i);
                 setArquivoBytes(novoArquivo, idTabela);
                 bucketEncontrado = true;
+
                 break;
             }
         }
@@ -54,13 +63,21 @@ public class GerenciadorBucket {
             int bucketPosition = procuraBucketDisco(idTabela, hash);
             if(bucketPosition != 0) { //bucket encontrado no disco
                 byte[] arquivo = getArquivoBytes(idTabela);
-                int posicaoGravacao = bucketPosition + Bloco.byteToInt(Bloco.getBytes(arquivo, 5, 3));
+                int posicaoGravacao = bucketPosition + Bloco.byteToInt(Bloco.getBytes(arquivo, bucketPosition + 5, 3));
                 byte[] novoArquivo = new byte[arquivo.length + tupla.length];
-                novoArquivo = Bloco.bytePlusbyte(novoArquivo, arquivo, 0);
+                byte[] novoTamanho = Bloco.intToByte(Bloco.byteToInt(Bloco.getBytes(arquivo, bucketPosition + 5, 3))+ tupla.length);
+                arquivo = Bloco.bytePlusbyte(arquivo, novoTamanho, bucketPosition + 5);
+
+                byte[] parte1 = Bloco.getBytes(arquivo, 0, posicaoGravacao);
+                byte[] parte2 = Bloco.getBytes(arquivo, posicaoGravacao, arquivo.length - posicaoGravacao);
+
+                novoArquivo = Bloco.bytePlusbyte(novoArquivo, parte1, 0);
                 novoArquivo = Bloco.bytePlusbyte(novoArquivo, tupla, posicaoGravacao);
+                novoArquivo = Bloco.bytePlusbyte(novoArquivo, parte2, posicaoGravacao + tupla.length);
+
                 setArquivoBytes(novoArquivo, idTabela);
             } else { // bucket nao existe
-                System.out.println("Bucket " + hash + " criado");
+                System.out.println("Bucket " + hash + " da tabela " + idTabela + " criado");
                 Bloco novoBucket = new Bloco(hash, (byte) idTabela);
                 novoBucket.adicionarTuplaNoBloco(tupla);
                 adicionaBucket(novoBucket, idTabela);
@@ -72,15 +89,29 @@ public class GerenciadorBucket {
         if(verificaLimiteBuckets(idTabela)){ // memoria com espaco livre
             buckets.add(bucketNovo);
         } else { // memoria cheia
-            Bloco bucket = buckets.get(1);
+            int bucketToDelete = getBucketPositionDelete(idTabela);
+            Bloco bucket = buckets.get(bucketToDelete);
+            System.out.println("Memoria de buckets da tabela " + idTabela + " ficou cheia");
+            System.out.println("Bucket " + bucket.getId() + " foi movido para disco");
             byte[] arquivo = getArquivoBytes(idTabela);
-            byte[] novoArquivo = new byte[arquivo.length + bucketNovo.dados.length];
+            byte[] novoArquivo = new byte[arquivo.length + bucket.dados.length];
+
             novoArquivo = Bloco.bytePlusbyte(novoArquivo, arquivo, 0);
-            novoArquivo = Bloco.bytePlusbyte(novoArquivo, bucketNovo.dados, arquivo.length);
-            buckets.remove(1);
+            novoArquivo = Bloco.bytePlusbyte(novoArquivo, bucket.dados, arquivo.length);
             setArquivoBytes(novoArquivo, idTabela);
-            buckets.add(1, bucketNovo);
+
+            buckets.remove(bucketToDelete);
+            buckets.add(bucketNovo);
         }
+    }
+
+    int getBucketPositionDelete(int idTabela){
+        for(int i = 0; i < buckets.size(); i++){
+            if(buckets.get(i).getIdTabela() == idTabela && buckets.get(i).getId() != 0){
+                return i;
+            }
+        }
+        return 2;
     }
 
     boolean verificaLimiteBuckets(int idTabela){
@@ -107,13 +138,9 @@ public class GerenciadorBucket {
             if(Bloco.byteToInt(Bloco.getBytes(arquivo, i+1, 3)) == hash) {
                 return i;
             }
-            if(Bloco.byteToInt(Bloco.getBytes(arquivo, i+5, 3)) < 8000){
-                i += 8192;
-            } else {
-                i += Bloco.byteToInt(Bloco.getBytes(arquivo, i + 5, 3));
-            }
-        }
+            i += Bloco.byteToInt(Bloco.getBytes(arquivo, i + 5, 3));
 
+        }
         return 0;
     }
 
