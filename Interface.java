@@ -17,12 +17,14 @@ import javafx.util.Callback;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Interface extends Application {
     boolean executado = false;
     List<ListView> listas = new ArrayList<ListView>();
     List<String[]> resultados = new ArrayList<>();
     HashMap<Integer, int []> selecoes = new HashMap<>();
+    HashMap<Integer, Integer> numTuplas = new HashMap<>();
     int numeroTabelas = getNumeroTabelas();
     GerenciadorBucket gereciadorBucket = new GerenciadorBucket(numeroTabelas);
     TableView<String[]> tabela = new TableView<>();
@@ -122,6 +124,8 @@ public class Interface extends Application {
             gereciadorBucket.apagaBuckets(numeroTabelas);
         }
 
+        //gereciadorBucket.setBucketMontagem(true);
+
        for(int i = 0; i < numeroTabelas; i++){
             for(int j = 1; j < 1000000000; j++){
                 pagina = new Pagina(i + 1, j, 0);
@@ -131,7 +135,10 @@ public class Interface extends Application {
                 }
                 executaHash(bloco, i);
             }
+           mostrarDistribuicaoBuckets(i);
         }
+
+        //gereciadorBucket.setBucketMontagem(false);
         executado = true;
         resultados.clear();
         tabela.getItems().clear();
@@ -160,8 +167,10 @@ public class Interface extends Application {
                     if (numColuna == selecoesDaTabela[j]) {
                         if(tamColuna == 1){
                             dados = Bloco.getBytes(bloco.dados, h + 2, 1);
-                        } else {
+                        } else if(tamColuna == 2){
                             dados = Bloco.getBytes(bloco.dados, h + 2, 2);
+                        } else {
+                            dados = Bloco.getBytes(bloco.dados, h + 2, 3);
                         }
                         totalHash += funcaoHash(dados);
                     }
@@ -170,6 +179,12 @@ public class Interface extends Application {
 
                 h += tamColuna + 2;
                 numColuna++;
+            }
+
+            if(numTuplas.get(totalHash) == null){
+                numTuplas.put(totalHash, 1);
+            } else {
+                numTuplas.put(totalHash, numTuplas.get(totalHash) + 1);
             }
 
             byte[] dadosTupla = Bloco.getBytes(bloco.dados, i, tamTupla + numColuna * 2 + 4);
@@ -181,11 +196,11 @@ public class Interface extends Application {
     int funcaoHash(byte[] dados){
         int totalHash = 0;
 
-        for(int i = 0; i < dados.length; i++){
-            totalHash += dados[i];
+        for(int i = 1; i <= dados.length; i++){
+            totalHash = totalHash + (i * dados[i - 1]);
         }
 
-        return totalHash % 11;
+        return totalHash;
     }
 
 
@@ -212,6 +227,16 @@ public class Interface extends Application {
         int deslocamentoLinha = Bloco.byte2ToInt(Bloco.getBytes(blocoControle, 9, 2));
         String linhaColunas = Bloco.byteToString(Bloco.getBytes(blocoControle, 11, deslocamentoLinha));
         return linhaColunas.split("\\|");
+    }
+
+    void mostrarDistribuicaoBuckets(int idTabela){
+        for (Map.Entry<Integer, Integer> entry : numTuplas.entrySet()) {
+            Integer key = entry.getKey();
+            Integer value = entry.getValue();
+
+            System.out.println();
+            System.out.println("O bucket " + key + " da tabela " + idTabela + " recebeu " + value + " tuplas");
+        }
     }
 
 }

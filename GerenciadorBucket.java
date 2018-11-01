@@ -3,9 +3,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class GerenciadorBucket {
+    ArrayList<String[]> resultados = new ArrayList<>();
     int limitBucketsMemory = 10;
     int limitBlockSize = 8192;
     ArrayList<Bloco> buckets = new ArrayList<>();
+    ArrayList<byte[]> bytesArquivos = new ArrayList<>();
+    boolean bucketMontagem = false;
 
     GerenciadorBucket(int numTabelas){
         for (int i = 0; i < numTabelas; i++){
@@ -14,6 +17,8 @@ public class GerenciadorBucket {
                 Bloco bucket0 = new Bloco(0, (byte) i);
                 byte[] dadosBucket = Bloco.getBytes(bucket0.dados, 0, 8);
                 out.write(dadosBucket);
+                out.close();
+                bytesArquivos.add(dadosBucket);
                 buckets.add(bucket0);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -22,7 +27,6 @@ public class GerenciadorBucket {
     }
 
     ArrayList<String[]> comparaBuckects(HashMap<Integer, int []> selecoes){
-        ArrayList<String[]> resultados = new ArrayList<>();
 
         System.out.println();
         System.out.println("Iniciando comparações de buckets...");
@@ -31,7 +35,7 @@ public class GerenciadorBucket {
             Bloco bucket = buckets.get(i);
 
             if(bucket.getIdTabela() == 0){
-                resultados.addAll(comparaBucketCorrespondente(selecoes, bucket));
+                comparaBucketCorrespondente(selecoes, bucket);
             }
         }
 
@@ -45,7 +49,7 @@ public class GerenciadorBucket {
             Bloco bucket = new Bloco(idBloco, idContainer);
 
             bucket.dados = Bloco.getBytes(arquivo, i, Bloco.byteToInt(Bloco.getBytes(arquivo, i + 5, 3)));
-            resultados.addAll(comparaBucketCorrespondente(selecoes, bucket));
+            comparaBucketCorrespondente(selecoes, bucket);
 
             i += Bloco.byteToInt(Bloco.getBytes(arquivo, i + 5, 3));
         }
@@ -56,7 +60,7 @@ public class GerenciadorBucket {
         return resultados;
     }
 
-    ArrayList<String[]> comparaBucketCorrespondente(HashMap<Integer,int[]> selecoes, Bloco bucket) {
+    void comparaBucketCorrespondente(HashMap<Integer,int[]> selecoes, Bloco bucket) {
         boolean bucketEncontrado = false;
         Bloco bucket2 = null;
         // procura bucket correspondente na memoria
@@ -75,18 +79,16 @@ public class GerenciadorBucket {
         }
 
         if(bucket2 != null){
-            return comparaLinhas(selecoes, bucket, bucket2);
+            comparaLinhas(selecoes, bucket, bucket2);
         }
-        return null;
     }
 
-    ArrayList<String[]> comparaLinhas(HashMap<Integer,int[]> selecoes, Bloco bucket, Bloco bucket2) {
+    void comparaLinhas(HashMap<Integer,int[]> selecoes, Bloco bucket, Bloco bucket2) {
         int i = 8;
         int tamBucket = bucket.getTamanhoBloco();
         int tamBucket2 = bucket2.getTamanhoBloco();
         ArrayList<String> linha1;
         ArrayList<String> linha2 = new ArrayList<>();
-        ArrayList<String[]> resultados = new ArrayList<>();
 
         while(i < tamBucket){//percorre bucket
             int tamTupla = Bloco.byteToInt(Bloco.getBytes(bucket.dados, i , 3));
@@ -104,11 +106,13 @@ public class GerenciadorBucket {
             i += tamTupla + numColuna*2 + 4;
             numColuna = 0;
 
+            int tamTupla2;
+            int h2;
             int numColuna2 = 0;
             int j = 8;
             while(j < tamBucket2){//percorre bucket
-                int tamTupla2 = Bloco.byteToInt(Bloco.getBytes(bucket2.dados, j , 3));
-                int h2 = j + 4;
+                tamTupla2 = Bloco.byteToInt(Bloco.getBytes(bucket2.dados, j , 3));
+                h2 = j + 4;
 
                 while(h2 < tamTupla2 + j){//percorre tupla
                     int tamColuna2 = Bloco.byte2ToInt(Bloco.getBytes(bucket2.dados, h2, 2));
@@ -117,16 +121,15 @@ public class GerenciadorBucket {
                     numColuna2++;
                     h2 += tamColuna2 + 2;
                 }
-                resultados = combinaLinha(linha1, linha2, selecoes, resultados);
+                combinaLinha(linha1, linha2, selecoes);
                 linha2 = new ArrayList<>();
                 j += tamTupla2 + numColuna2*2 + 4;
                 numColuna2 = 0;
             }
         }
-        return resultados;
     }
 
-    ArrayList<String[]> combinaLinha(ArrayList<String> linha1, ArrayList<String> linha2, HashMap<Integer,int[]> selecoes, ArrayList<String[]> resultados) {
+    void combinaLinha(ArrayList<String> linha1, ArrayList<String> linha2, HashMap<Integer,int[]> selecoes) {
         int[] selecoes1 = selecoes.get(0);
         int[] selecoes2 = selecoes.get(1);
         int igualdades = 0;
@@ -147,7 +150,6 @@ public class GerenciadorBucket {
             resultados.add(resultadoCombinado);
         }
 
-        return resultados;
     }
 
 
@@ -302,6 +304,7 @@ public class GerenciadorBucket {
         System.out.println("Apagando buckets...");
 
         buckets.clear();
+        resultados.clear();
         for(int i = 0; i < numTabelas; i++) {
             try {
                 FileOutputStream out = new FileOutputStream("C:\\Users\\Rodrigo\\IdeaProjects\\BD2\\output\\bucketstorage-" + i + ".txt");
@@ -316,29 +319,48 @@ public class GerenciadorBucket {
         }
     }
 
+    void setBucketMontagem(boolean status){
+        if(status == true){
+            bucketMontagem = true;
+        } else {
+            bucketMontagem = false;
+            for(int i = 0; i < bytesArquivos.size(); i++){
+                setArquivoBytes(bytesArquivos.get(i), i);
+            }
+        }
+    }
+
     void setArquivoBytes(byte[] arquivo, int idTabela){
-        try {
-            FileOutputStream out = new FileOutputStream("C:\\Users\\Rodrigo\\IdeaProjects\\BD2\\output\\bucketstorage-"+idTabela+".txt");
-            out.write(arquivo);
-            out.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        if(bucketMontagem == true){
+            bytesArquivos.set(idTabela, arquivo);
+        } else {
+            try {
+                FileOutputStream out = new FileOutputStream("C:\\Users\\Rodrigo\\IdeaProjects\\BD2\\output\\bucketstorage-" + idTabela + ".txt");
+                out.write(arquivo);
+                out.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     byte[] getArquivoBytes(int idTabela) {
-        File file = new File("C:\\Users\\Rodrigo\\IdeaProjects\\BD2\\output\\bucketstorage-"+idTabela+".txt");
-        byte[] bytesArray = new byte[(int) file.length()];
+        if(bucketMontagem == true){
+            return bytesArquivos.get(idTabela);
+        } else {
+            File file = new File("C:\\Users\\Rodrigo\\IdeaProjects\\BD2\\output\\bucketstorage-" + idTabela + ".txt");
+            byte[] bytesArray = new byte[(int) file.length()];
 
-        FileInputStream fis = null;
-        try {
-            fis = new FileInputStream(file);
-            fis.read(bytesArray);
-            fis.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+            FileInputStream fis = null;
+            try {
+                fis = new FileInputStream(file);
+                fis.read(bytesArray);
+                fis.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return bytesArray;
         }
-        return bytesArray;
     }
 
 }
