@@ -114,7 +114,7 @@ public class Interface extends Application {
 
                 for (int j = 0; j < selecoesDaTabela.length; j++) {
                     if (numColuna == selecoesDaTabela[j]) {
-                        byte[] dados = Bloco.getBytes(bloco.dados, h + 2, 4);
+                        byte[] dados = Bloco.getBytes(bloco.dados, h + 2, 2);
                         totalHash += funcaoHash(dados);
                     }
                 }
@@ -124,7 +124,7 @@ public class Interface extends Application {
                 numColuna++;
             }
 
-            byte[] dadosTupla = Bloco.getBytes(bloco.dados, i, tamTupla);
+            byte[] dadosTupla = Bloco.getBytes(bloco.dados, i, tamTupla + numColuna * 2 + 4);
             gereciadorBucket.adicionarTupla(dadosTupla, totalHash, idTabela);
             i += tamTupla + numColuna*2 + 4 ;
         }

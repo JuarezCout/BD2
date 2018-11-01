@@ -80,7 +80,7 @@ public class GerenciadorBucket {
         int i = 8;
         int tamBucket = bucket.getTamanhoBloco();
         int tamBucket2 = bucket2.getTamanhoBloco();
-        ArrayList<String> linha1 = new ArrayList<>();
+        ArrayList<String> linha1;
         ArrayList<String> linha2 = new ArrayList<>();
         ArrayList<String[]> resultados = new ArrayList<>();
 
@@ -88,6 +88,7 @@ public class GerenciadorBucket {
             int tamTupla = Bloco.byteToInt(Bloco.getBytes(bucket.dados, i , 3));
             int numColuna = 0;
             int h = i + 4;
+            linha1 = new ArrayList<>();
 
             while(h < tamTupla + i){//percorre tupla
                 int tamColuna = Bloco.byte2ToInt(Bloco.getBytes(bucket.dados, h, 2));
@@ -97,14 +98,15 @@ public class GerenciadorBucket {
                 h += tamColuna + 2;
             }
             i += tamTupla + numColuna*2 + 4;
+            numColuna = 0;
 
             int numColuna2 = 0;
             int j = 8;
             while(j < tamBucket2){//percorre bucket
                 int tamTupla2 = Bloco.byteToInt(Bloco.getBytes(bucket2.dados, j , 3));
-                int h2 = i + 4;
+                int h2 = j + 4;
 
-                while(h2 < tamTupla2 + i){//percorre tupla
+                while(h2 < tamTupla2 + j){//percorre tupla
                     int tamColuna2 = Bloco.byte2ToInt(Bloco.getBytes(bucket2.dados, h2, 2));
                     String coluna2 = Bloco.byteToString(Bloco.getBytes(bucket2.dados, h2 + 2, tamColuna2));
                     linha2.add(coluna2);
@@ -112,9 +114,9 @@ public class GerenciadorBucket {
                     h2 += tamColuna2 + 2;
                 }
                 resultados = combinaLinha(linha1, linha2, selecoes, resultados);
-                linha1 = new ArrayList<>();
                 linha2 = new ArrayList<>();
                 j += tamTupla2 + numColuna2*2 + 4;
+                numColuna2 = 0;
             }
         }
         return resultados;
@@ -126,16 +128,19 @@ public class GerenciadorBucket {
         int igualdades = 0;
 
         for(int i = 0; i < selecoes1.length; i++){
-            if(linha1.get(selecoes1[i]) == linha2.get(selecoes2[i])){
+            if(linha1.get(selecoes1[i]).equals(linha2.get(selecoes2[i]))){
                 igualdades++;
             }
         }
 
         if(igualdades == selecoes1.length){
-            linha1.addAll(linha2);
-            String[] resultado = new String[linha1.size()];
-            resultado = linha1.toArray(resultado);
-            resultados.add(resultado);
+            ArrayList<String> resultado = new ArrayList<>();
+            resultado.addAll(linha1);
+            resultado.addAll(linha2);
+
+            String[] resultadoCombinado = new String[resultado.size()];
+            resultadoCombinado = resultado.toArray(resultadoCombinado);
+            resultados.add(resultadoCombinado);
         }
 
         return resultados;
