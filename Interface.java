@@ -1,4 +1,6 @@
 import javafx.application.Application;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -6,22 +8,25 @@ import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.ListView;
-import javafx.scene.control.SelectionMode;
+import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 public class Interface extends Application {
+    boolean executado = false;
     List<ListView> listas = new ArrayList<ListView>();
+    List<String[]> resultados = new ArrayList<>();
     HashMap<Integer, int []> selecoes = new HashMap<>();
     int numeroTabelas = getNumeroTabelas();
     GerenciadorBucket gereciadorBucket = new GerenciadorBucket(numeroTabelas);
+    TableView<String[]> tabela = new TableView<>();
+    ObservableList<String[]> data = FXCollections.observableArrayList();
 
     public static void render(String args[]) {
         launch(args);
@@ -29,7 +34,8 @@ public class Interface extends Application {
 
     @Override
     public void start(Stage stage) {
-        GridPane gridPane = new GridPane();
+        GridPane gridPaneSelecoes = new GridPane();
+        GridPane gridPaneResultado = new GridPane();
 
         for(int i = 0; i < numeroTabelas; i++ ){
             Text tableLabel = new Text("Tabela " + i);
@@ -37,15 +43,16 @@ public class Interface extends Application {
             ObservableList<String> colunas = FXCollections.observableArrayList(getNomeColunas(i));
             ListView<String> listaColunas = new ListView<String>(colunas);
             listaColunas.setPrefHeight(colunas.size() * 24 + 2);
+            listaColunas.setMaxWidth(200);
             listaColunas.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             listas.add(listaColunas);
 
             if(i == 0) {
-                gridPane.add(tableLabel, i, i);
-                gridPane.add(listaColunas, i, i + 1);
+                gridPaneSelecoes.add(tableLabel, i, i);
+                gridPaneSelecoes.add(listaColunas, i, i + 1);
             } else {
-                gridPane.add(tableLabel, i, i - 1);
-                gridPane.add(listaColunas, i, i);
+                gridPaneSelecoes.add(tableLabel, i, i - 1);
+                gridPaneSelecoes.add(listaColunas, i, i);
             }
 
 
@@ -59,21 +66,48 @@ public class Interface extends Application {
                 handleExecutar();
             }
         });
-        gridPane.add(executar, 0,3);
+        gridPaneSelecoes.add(executar, 2,1);
 
         Text resultadosLabel = new Text("Resultados");
-        gridPane.add(resultadosLabel, 1, 2);
+        gridPaneResultado.add(resultadosLabel, 0, 1);
 
-        ListView<String> listaResultados = new ListView<String>();
-        listaResultados.setPrefHeight(150);
-        gridPane.add(listaResultados, 1, 3);
+        int totalColunas = 0;
+        for(int i = 0; i < numeroTabelas; i++){
+            String[] nomeColunas = getNomeColunas(i);
 
-        gridPane.setPadding(new Insets(10, 10, 10, 10));
-        gridPane.setMinSize(500,400);
-        gridPane.setVgap(5);
-        gridPane.setHgap(5);
-        gridPane.setAlignment(Pos.CENTER);
-        Scene scene = new Scene(gridPane);
+            for(int j = 0; j < nomeColunas.length; j++){
+                TableColumn col = new TableColumn(nomeColunas[j]);
+
+                int finalTotalColunas = totalColunas;
+                col.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<String[], String>, ObservableValue<String>>() {
+                    @Override
+                    public ObservableValue<String> call(TableColumn.CellDataFeatures<String[], String> p) {
+                        return new SimpleStringProperty((p.getValue()[finalTotalColunas]));
+                    }
+                });
+
+                totalColunas++;
+                tabela.getColumns().add(col);
+            }
+        }
+
+        tabela.setPrefHeight(300);
+        tabela.setItems(data);
+        gridPaneResultado.add(tabela, 0, 1);
+
+        gridPaneSelecoes.setPadding(new Insets(5, 10, 5, 0));
+        gridPaneSelecoes.setVgap(5);
+        gridPaneSelecoes.setHgap(5);
+        gridPaneSelecoes.setAlignment(Pos.CENTER_LEFT);
+
+        gridPaneResultado.add(gridPaneSelecoes, 0, 0);
+
+        gridPaneResultado.setPadding(new Insets(10, 10, 10, 10));
+        gridPaneResultado.setMinSize(500,400);
+        gridPaneResultado.setVgap(5);
+        gridPaneResultado.setHgap(5);
+        gridPaneResultado.setAlignment(Pos.CENTER);
+        Scene scene = new Scene(gridPaneResultado);
         stage.setScene(scene);
 
         stage.setTitle("Hash Double Join");
@@ -83,6 +117,10 @@ public class Interface extends Application {
     public void handleExecutar() {
         getSelecoes();
         Pagina pagina;
+
+        if(executado == true){
+            gereciadorBucket.apagaBuckets(numeroTabelas);
+        }
 
        for(int i = 0; i < numeroTabelas; i++){
             for(int j = 1; j < 1000000000; j++){
@@ -94,8 +132,11 @@ public class Interface extends Application {
                 executaHash(bloco, i);
             }
         }
-
-        gereciadorBucket.comparaBuckects(selecoes);
+        executado = true;
+        resultados.clear();
+        tabela.getItems().clear();
+        resultados = gereciadorBucket.comparaBuckects(selecoes);
+        data.addAll(resultados);
 
     }
 
@@ -142,7 +183,7 @@ public class Interface extends Application {
 
 
     private void getSelecoes() {
-
+        selecoes.clear();
         for(int i = 0; i < numeroTabelas; i++ ){
            ObservableList<Integer> selecoesTabela = listas.get(i).getSelectionModel().getSelectedIndices();
            int[] selecoesDaTabela = new int[selecoesTabela.size()];

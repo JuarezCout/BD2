@@ -85,8 +85,8 @@ public class GerenciadorBuffer {
             idRequisicaoBloco = paginaReq.getBlocoID();
             int status = 0;
 
-            System.out.println("Buscando o bloco: " + idRequisicaoCont + "-" + idRequisicaoBloco);
-            System.out.println();
+            //System.out.println("Buscando o bloco: " + idRequisicaoCont + "-" + idRequisicaoBloco);
+            //System.out.println();
 
             //Qtd de chamadas do buffer
             cacheHitMiss[2]++;

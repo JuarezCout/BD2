@@ -24,6 +24,7 @@ public class GerenciadorBucket {
     ArrayList<String[]> comparaBuckects(HashMap<Integer, int []> selecoes){
         ArrayList<String[]> resultados = new ArrayList<>();
 
+        System.out.println();
         System.out.println("Iniciando comparações de buckets...");
 
         for(int i = 0; i < buckets.size(); i++){
@@ -48,6 +49,9 @@ public class GerenciadorBucket {
 
             i += Bloco.byteToInt(Bloco.getBytes(arquivo, i + 5, 3));
         }
+
+        System.out.println();
+        System.out.println("Fim das comparações de buckets");
 
         return resultados;
     }
@@ -167,6 +171,7 @@ public class GerenciadorBucket {
             }
             //bucket na memoria mas cheio
             if(bucket.getIdTabela() == idTabela && bucket.getId() == hash){
+                System.out.println();
                 System.out.println("Bucket "+ bucket.getId() + " da tabela " + idTabela + " ficou cheio e foi movido para disco");
                 bucket.adicionarTuplaNoBlocoCheio(tupla);
 
@@ -203,6 +208,7 @@ public class GerenciadorBucket {
 
                 setArquivoBytes(novoArquivo, idTabela);
             } else { // bucket nao existe
+                System.out.println();
                 System.out.println("Bucket " + hash + " da tabela " + idTabela + " criado");
                 Bloco novoBucket = new Bloco(hash, (byte) idTabela);
                 novoBucket.adicionarTuplaNoBloco(tupla);
@@ -217,6 +223,7 @@ public class GerenciadorBucket {
         } else { // memoria cheia
             int bucketToDelete = getBucketPositionDelete(idTabela);
             Bloco bucket = buckets.get(bucketToDelete);
+            System.out.println();
             System.out.println("Memoria de buckets da tabela " + idTabela + " ficou cheia");
             System.out.println("Bucket " + bucket.getId() + " foi movido para disco");
             byte[] arquivo = getArquivoBytes(idTabela);
@@ -284,6 +291,25 @@ public class GerenciadorBucket {
 
         }
         return 0;
+    }
+
+    void apagaBuckets(int numTabelas){
+        System.out.println();
+        System.out.println("Apagando buckets...");
+
+        buckets.clear();
+        for(int i = 0; i < numTabelas; i++) {
+            try {
+                FileOutputStream out = new FileOutputStream("C:\\Users\\Rodrigo\\IdeaProjects\\BD2\\output\\bucketstorage-" + i + ".txt");
+                Bloco bucket0 = new Bloco(0, (byte) i);
+                byte[] dadosBucket = Bloco.getBytes(bucket0.dados, 0, 8);
+                out.write(dadosBucket);
+                buckets.add(bucket0);
+                out.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     void setArquivoBytes(byte[] arquivo, int idTabela){
