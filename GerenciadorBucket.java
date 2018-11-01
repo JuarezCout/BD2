@@ -226,11 +226,15 @@ public class GerenciadorBucket {
             System.out.println();
             System.out.println("Memoria de buckets da tabela " + idTabela + " ficou cheia");
             System.out.println("Bucket " + bucket.getId() + " foi movido para disco");
+
+            int bytesUsados = Bloco.byteToInt(Bloco.getBytes(bucket.dados, 5, 3));
+            byte[] bytesBucket = Bloco.getBytes(bucket.dados, 0 , bytesUsados);
+
             byte[] arquivo = getArquivoBytes(idTabela);
-            byte[] novoArquivo = new byte[arquivo.length + bucket.dados.length];
+            byte[] novoArquivo = new byte[arquivo.length + bytesUsados];
 
             novoArquivo = Bloco.bytePlusbyte(novoArquivo, arquivo, 0);
-            novoArquivo = Bloco.bytePlusbyte(novoArquivo, bucket.dados, arquivo.length);
+            novoArquivo = Bloco.bytePlusbyte(novoArquivo, bytesBucket, arquivo.length);
             setArquivoBytes(novoArquivo, idTabela);
 
             buckets.remove(bucketToDelete);

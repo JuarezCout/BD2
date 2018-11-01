@@ -93,7 +93,7 @@ public class Interface extends Application {
 
         tabela.setPrefHeight(300);
         tabela.setItems(data);
-        gridPaneResultado.add(tabela, 0, 1);
+        gridPaneResultado.add(tabela, 0, 2);
 
         gridPaneSelecoes.setPadding(new Insets(5, 10, 5, 0));
         gridPaneSelecoes.setVgap(5);
@@ -152,15 +152,22 @@ public class Interface extends Application {
             int h = i + 4;
 
             while(tamTupla + i > h) { //percorre colunas da tupla
+                int tamColuna = Bloco.byte2ToInt(Bloco.getBytes(bloco.dados, h, 2));
 
                 for (int j = 0; j < selecoesDaTabela.length; j++) {
+                    byte[] dados;
+
                     if (numColuna == selecoesDaTabela[j]) {
-                        byte[] dados = Bloco.getBytes(bloco.dados, h + 2, 2);
+                        if(tamColuna == 1){
+                            dados = Bloco.getBytes(bloco.dados, h + 2, 1);
+                        } else {
+                            dados = Bloco.getBytes(bloco.dados, h + 2, 2);
+                        }
                         totalHash += funcaoHash(dados);
                     }
                 }
 
-                int tamColuna = Bloco.byte2ToInt(Bloco.getBytes(bloco.dados, h, 2));
+
                 h += tamColuna + 2;
                 numColuna++;
             }
@@ -178,7 +185,7 @@ public class Interface extends Application {
             totalHash += dados[i];
         }
 
-        return totalHash % 3;
+        return totalHash % 11;
     }
 
 
