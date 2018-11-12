@@ -22,7 +22,7 @@ import java.util.Map;
 public class Interface extends Application {
     boolean executado = false;
     List<ListView> listas = new ArrayList<ListView>();
-    List<String[]> resultados = new ArrayList<>();
+    ArrayList<String[]> resultados;
     HashMap<Integer, int []> selecoes = new HashMap<>();
     HashMap<Integer, Integer> numTuplas = new HashMap<>();
     int numeroTabelas = getNumeroTabelas();
@@ -122,6 +122,9 @@ public class Interface extends Application {
 
         if(executado == true){
             gereciadorBucket.apagaBuckets(numeroTabelas);
+            numTuplas.clear();
+            resultados.clear();
+            tabela.getItems().clear();
         }
 
         //gereciadorBucket.setBucketMontagem(true);
@@ -140,9 +143,9 @@ public class Interface extends Application {
 
         //gereciadorBucket.setBucketMontagem(false);
         executado = true;
-        resultados.clear();
-        tabela.getItems().clear();
         resultados = gereciadorBucket.comparaBuckects(selecoes);
+        gereciadorBucket.limpaMemoria();
+        resultados.trimToSize();
         data.addAll(resultados);
 
     }

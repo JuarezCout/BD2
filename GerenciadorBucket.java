@@ -3,8 +3,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class GerenciadorBucket {
-    ArrayList<String[]> resultados = new ArrayList<>();
-    int limitBucketsMemory = 10;
+    ArrayList<String[]> resultados;
+    int limitBucketsMemory = 30;
     int limitBlockSize = 8192;
     ArrayList<Bloco> buckets = new ArrayList<>();
     ArrayList<byte[]> bytesArquivos = new ArrayList<>();
@@ -27,6 +27,7 @@ public class GerenciadorBucket {
     }
 
     ArrayList<String[]> comparaBuckects(HashMap<Integer, int []> selecoes){
+        resultados = new ArrayList<>();
 
         System.out.println();
         System.out.println("Iniciando comparações de buckets...");
@@ -126,6 +127,7 @@ public class GerenciadorBucket {
                 j += tamTupla2 + numColuna2*2 + 4;
                 numColuna2 = 0;
             }
+            resultados.trimToSize();
         }
     }
 
@@ -304,7 +306,6 @@ public class GerenciadorBucket {
         System.out.println("Apagando buckets...");
 
         buckets.clear();
-        resultados.clear();
         for(int i = 0; i < numTabelas; i++) {
             try {
                 FileOutputStream out = new FileOutputStream("C:\\Users\\Rodrigo\\IdeaProjects\\BD2\\output\\bucketstorage-" + i + ".txt");
@@ -328,6 +329,10 @@ public class GerenciadorBucket {
                 setArquivoBytes(bytesArquivos.get(i), i);
             }
         }
+    }
+
+    void limpaMemoria(){
+        resultados = null;
     }
 
     void setArquivoBytes(byte[] arquivo, int idTabela){
