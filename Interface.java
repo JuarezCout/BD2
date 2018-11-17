@@ -18,17 +18,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Semaphore;
 
 public class Interface extends Application {
     boolean executado = false;
     List<ListView> listas = new ArrayList<ListView>();
     ArrayList<String[]> resultados;
-    HashMap<Integer, int []> selecoes = new HashMap<>();
+    static HashMap<Integer, int []> selecoes = new HashMap<>();
     HashMap<Integer, Integer> numTuplas = new HashMap<>();
     int numeroTabelas = getNumeroTabelas();
     GerenciadorBucket gereciadorBucket = new GerenciadorBucket(numeroTabelas);
     TableView<String[]> tabela = new TableView<>();
-    ObservableList<String[]> data = FXCollections.observableArrayList();
+    static ObservableList<String[]> data = FXCollections.observableArrayList();
+    static int tabelasBuildadas = 0;
 
     public static void render(String args[]) {
         launch(args);
@@ -118,7 +120,6 @@ public class Interface extends Application {
 
     public void handleExecutar() {
         getSelecoes();
-        Pagina pagina;
 
         if(executado == true){
             gereciadorBucket.apagaBuckets(numeroTabelas);
@@ -130,24 +131,41 @@ public class Interface extends Application {
         //gereciadorBucket.setBucketMontagem(true);
 
        for(int i = 0; i < numeroTabelas; i++){
-            for(int j = 1; j < 1000000000; j++){
-                pagina = new Pagina(i + 1, j, 0);
-                Bloco bloco = GerenciadorBuffer.getBlocoBuffer(pagina);
-                if(bloco == null) {
-                    break;
-                }
-                executaHash(bloco, i);
-            }
-           mostrarDistribuicaoBuckets(i);
-        }
+           executaHashContainer(i);
+           //mostrarDistribuicaoBuckets(i);
+       }
+       gereciadorBucket.criaThreadProbe();
 
         //gereciadorBucket.setBucketMontagem(false);
-        executado = true;
-        resultados = gereciadorBucket.comparaBuckects(selecoes);
-        gereciadorBucket.limpaMemoria();
-        resultados.trimToSize();
-        data.addAll(resultados);
 
+        executado = true;
+
+
+        //resultados = gereciadorBucket.comparaBuckects(selecoes);
+        //gereciadorBucket.limpaMemoria();
+        //resultados.trimToSize();
+        //data.addAll(resultados);
+
+    }
+
+    //cria thread que executa o build
+    void executaHashContainer(int idTabela) {
+        new Thread() {
+            Pagina pagina;
+
+            public void run() {
+                System.out.println("Iniciando thread de build da tabela " + idTabela + " ...");
+                for(int j = 1; j < 1000000000; j++){
+                    pagina = new Pagina(idTabela + 1, j, 0);
+                    Bloco bloco = GerenciadorBuffer.getBlocoBuffer(pagina);
+                    if(bloco == null) {
+                        tabelasBuildadas++;
+                        break;
+                    }
+                    executaHash(bloco, idTabela);
+                }
+            }
+        }.start();
     }
 
     void executaHash(Bloco bloco, int idTabela) {
