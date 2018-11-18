@@ -46,9 +46,9 @@ public class GerenciadorBucket {
                         comparaBuckects(hash);
 
                         if(Interface.tabelasBuildadas == 2 && filaProbe.isEmpty()){
-                            resultados.trimToSize();
                             Interface.data.addAll(resultados);
                             limpaMemoria();
+                            System.out.println("Fim das comparações de buckets...");
                             break;
                         }
                     } catch (InterruptedException e) {
@@ -63,6 +63,13 @@ public class GerenciadorBucket {
         boolean bucketEncontrado = false;
         //System.out.println();
         //System.out.println("Iniciando comparações de buckets...");
+
+        try {
+            acessoArquivo.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
 
         for(int i = 0; i < buckets.size(); i++){
             Bloco bucket = buckets.get(i);
@@ -97,6 +104,7 @@ public class GerenciadorBucket {
             i += Bloco.byteToInt(Bloco.getBytes(arquivo, i + 5, 3));
         }
 
+        acessoArquivo.release();
         //System.out.println();
         //System.out.println("Fim das comparações de buckets");
 
@@ -146,6 +154,7 @@ public class GerenciadorBucket {
                 numColuna++;
                 h += tamColuna + 2;
             }
+
             i += tamTupla + numColuna*2 + 4;
             numColuna = 0;
 
@@ -170,7 +179,6 @@ public class GerenciadorBucket {
             }
             resultados.trimToSize();
         }
-
         probeTabela1.put(bucket.getId(), i);
         probeTabela2.put(bucket2.getId(), j);
     }
@@ -217,6 +225,13 @@ public class GerenciadorBucket {
 
     void adicionarTupla(byte[] tupla, int hash, int idTabela){
         boolean bucketEncontrado = false;
+
+        try {
+            acessoArquivo.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         //procurar bucket na memoria
         for (int i = 0; i < buckets.size(); i++ ) {
             Bloco bucket = buckets.get(i);
@@ -254,7 +269,9 @@ public class GerenciadorBucket {
         }
 
         //procura bucket no disco
+
         if(bucketEncontrado == false){
+
             int bucketPosition = procuraBucketDisco(idTabela, hash);
             if(bucketPosition != 0) { //bucket encontrado no disco
                 byte[] arquivo = getArquivoBytes(idTabela);
@@ -279,6 +296,8 @@ public class GerenciadorBucket {
                 adicionaBucket(novoBucket, idTabela);
             }
         }
+
+        acessoArquivo.release();
 
         // adiciona na fila de probe
         try {
@@ -408,14 +427,10 @@ public class GerenciadorBucket {
             bytesArquivos.set(idTabela, arquivo);
         } else {
             try {
-                acessoArquivo.acquire();
                 FileOutputStream out = new FileOutputStream("C:\\Users\\Rodrigo\\IdeaProjects\\BD2\\output\\bucketstorage-" + idTabela + ".txt");
                 out.write(arquivo);
                 out.close();
-                acessoArquivo.release();
             } catch (IOException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
@@ -428,7 +443,6 @@ public class GerenciadorBucket {
             return bytesArquivos.get(idTabela);
         } else {
             try {
-                acessoArquivo.acquire();
                 File file = new File("C:\\Users\\Rodrigo\\IdeaProjects\\BD2\\output\\bucketstorage-" + idTabela + ".txt");
                 bytesArray = new byte[(int) file.length()];
 
@@ -436,10 +450,7 @@ public class GerenciadorBucket {
                 fis = new FileInputStream(file);
                 fis.read(bytesArray);
                 fis.close();
-                acessoArquivo.release();
             } catch (IOException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
             return bytesArray;
