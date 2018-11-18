@@ -6,7 +6,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Semaphore;
 
 public class GerenciadorBucket {
-    ArrayList<String[]> resultados = new ArrayList<>();
+    //ArrayList<String[]> resultados;
     int limitBucketsMemory = 30;
     int limitBlockSize = 8192;
     ArrayList<Bloco> buckets = new ArrayList<>();
@@ -16,7 +16,7 @@ public class GerenciadorBucket {
     BlockingQueue<Integer> filaProbe = new LinkedBlockingDeque<>();
     HashMap<Integer, Integer> probeTabela1 = new HashMap<>();
     HashMap<Integer, Integer> probeTabela2 = new HashMap<>();
-    Semaphore acessoArquivo = new Semaphore(1);
+    Semaphore acessoBucket = new Semaphore(1);
 
     GerenciadorBucket(int numTabelas){
         for (int i = 0; i < numTabelas; i++){
@@ -38,19 +38,20 @@ public class GerenciadorBucket {
         new Thread() {
             @Override
             public void run() {
-                System.out.println("Iniciando thread de probe...");
+                //resultados = new ArrayList<>();
+                System.out.println(this.getName() + ": Iniciando thread de probe...");
                 while(executaProbe) {
                     try {
-                        int hash = filaProbe.take();
-                        System.out.println("Comparando buckets de hash " + hash);
-                        comparaBuckects(hash);
-
                         if(Interface.tabelasBuildadas == 2 && filaProbe.isEmpty()){
-                            Interface.data.addAll(resultados);
-                            limpaMemoria();
-                            System.out.println("Fim das comparações de buckets...");
+                            //Interface.data.addAll(resultados);
+                            //limpaMemoria();
+                            System.out.println(this.getName() + ": Fim das comparações de buckets...");
                             break;
                         }
+
+                        int hash = filaProbe.take();
+                        System.out.println(this.getName() + ": Comparando buckets de hash " + hash);
+                        comparaBuckets(hash);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -59,13 +60,13 @@ public class GerenciadorBucket {
         }.start();
     }
 
-    void comparaBuckects(int hash){
+    void comparaBuckets(int hash){
         boolean bucketEncontrado = false;
         //System.out.println();
         //System.out.println("Iniciando comparações de buckets...");
 
         try {
-            acessoArquivo.acquire();
+            acessoBucket.acquire();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -104,7 +105,7 @@ public class GerenciadorBucket {
             i += Bloco.byteToInt(Bloco.getBytes(arquivo, i + 5, 3));
         }
 
-        acessoArquivo.release();
+        acessoBucket.release();
         //System.out.println();
         //System.out.println("Fim das comparações de buckets");
 
@@ -134,51 +135,73 @@ public class GerenciadorBucket {
     }
 
     void comparaLinhas(HashMap<Integer,int[]> selecoes, Bloco bucket, Bloco bucket2) {
-        int i = getInicioProbeBucket(0, bucket.getId());
-        int j = getInicioProbeBucket(1, bucket2.getId());
+        int i = 8;
+        int j = 8;
         int tamBucket = bucket.getTamanhoBloco();
         int tamBucket2 = bucket2.getTamanhoBloco();
+        int numExecucoes = 0;
         ArrayList<String> linha1;
         ArrayList<String> linha2 = new ArrayList<>();
 
-        while(i < tamBucket){//percorre bucket
-            int tamTupla = Bloco.byteToInt(Bloco.getBytes(bucket.dados, i , 3));
-            int numColuna = 0;
-            int h = i + 4;
-            linha1 = new ArrayList<>();
+        while(numExecucoes < 2) {
+            i = getInicioProbeBucket(0, bucket.getId());
+            j = getInicioProbeBucket(1, bucket2.getId());
 
-            while(h < tamTupla + i){//percorre tupla
-                int tamColuna = Bloco.byte2ToInt(Bloco.getBytes(bucket.dados, h, 2));
-                String coluna = Bloco.byteToString(Bloco.getBytes(bucket.dados, h + 2, tamColuna));
-                linha1.add(coluna);
-                numColuna++;
-                h += tamColuna + 2;
-            }
-
-            i += tamTupla + numColuna*2 + 4;
-            numColuna = 0;
-
-            int tamTupla2;
-            int h2;
-            int numColuna2 = 0;
-            while(j < tamBucket2){//percorre bucket
-                tamTupla2 = Bloco.byteToInt(Bloco.getBytes(bucket2.dados, j , 3));
-                h2 = j + 4;
-
-                while(h2 < tamTupla2 + j){//percorre tupla
-                    int tamColuna2 = Bloco.byte2ToInt(Bloco.getBytes(bucket2.dados, h2, 2));
-                    String coluna2 = Bloco.byteToString(Bloco.getBytes(bucket2.dados, h2 + 2, tamColuna2));
-                    linha2.add(coluna2);
-                    numColuna2++;
-                    h2 += tamColuna2 + 2;
+            if (i == 8 && j == 8) {
+                numExecucoes++;
+            } else if (i < tamBucket && numExecucoes == 0) {
+                j = 8;
+            } else if (j < tamBucket2 && numExecucoes == 1) {
+                if (i < tamBucket) {
+                    tamBucket = i;
                 }
-                combinaLinha(linha1, linha2, selecoes);
-                linha2 = new ArrayList<>();
-                j += tamTupla2 + numColuna2*2 + 4;
-                numColuna2 = 0;
+                i = 8;
+            } else if(i == tamBucket && j == tamBucket2){
+                break;
             }
-            resultados.trimToSize();
+
+
+            while (i < tamBucket) {//percorre bucket
+                int tamTupla = Bloco.byteToInt(Bloco.getBytes(bucket.dados, i, 3));
+                int numColuna = 0;
+                int h = i + 4;
+                linha1 = new ArrayList<>();
+
+                while (h < tamTupla + i) {//percorre tupla
+                    int tamColuna = Bloco.byte2ToInt(Bloco.getBytes(bucket.dados, h, 2));
+                    String coluna = Bloco.byteToString(Bloco.getBytes(bucket.dados, h + 2, tamColuna));
+                    linha1.add(coluna);
+                    numColuna++;
+                    h += tamColuna + 2;
+                }
+
+                i += tamTupla + numColuna * 2 + 4;
+                numColuna = 0;
+
+                int tamTupla2;
+                int h2;
+                int numColuna2 = 0;
+                while (j < tamBucket2) {//percorre bucket
+                    tamTupla2 = Bloco.byteToInt(Bloco.getBytes(bucket2.dados, j, 3));
+                    h2 = j + 4;
+
+                    while (h2 < tamTupla2 + j) {//percorre tupla
+                        int tamColuna2 = Bloco.byte2ToInt(Bloco.getBytes(bucket2.dados, h2, 2));
+                        String coluna2 = Bloco.byteToString(Bloco.getBytes(bucket2.dados, h2 + 2, tamColuna2));
+                        linha2.add(coluna2);
+                        numColuna2++;
+                        h2 += tamColuna2 + 2;
+                    }
+                    combinaLinha(linha1, linha2, selecoes);
+                    linha2 = new ArrayList<>();
+                    j += tamTupla2 + numColuna2 * 2 + 4;
+                    numColuna2 = 0;
+                }
+                //resultados.trimToSize();
+            }
+            numExecucoes ++;
         }
+
         probeTabela1.put(bucket.getId(), i);
         probeTabela2.put(bucket2.getId(), j);
     }
@@ -201,7 +224,7 @@ public class GerenciadorBucket {
 
             String[] resultadoCombinado = new String[resultado.size()];
             resultadoCombinado = resultado.toArray(resultadoCombinado);
-            resultados.add(resultadoCombinado);
+            Interface.data.add(resultadoCombinado);
         }
 
     }
@@ -227,7 +250,7 @@ public class GerenciadorBucket {
         boolean bucketEncontrado = false;
 
         try {
-            acessoArquivo.acquire();
+            acessoBucket.acquire();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -297,14 +320,16 @@ public class GerenciadorBucket {
             }
         }
 
-        acessoArquivo.release();
-
         // adiciona na fila de probe
-        try {
-            filaProbe.put(hash);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        if(!filaProbe.contains(hash)) {
+            try {
+                filaProbe.put(hash);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
+
+        acessoBucket.release();
     }
 
     void adicionaBucket(Bloco bucketNovo, int idTabela){
@@ -417,9 +442,11 @@ public class GerenciadorBucket {
         }
     }
 
+    /*
     void limpaMemoria(){
         resultados = null;
     }
+    */
 
     void setArquivoBytes(byte[] arquivo, int idTabela){
 

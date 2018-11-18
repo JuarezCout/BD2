@@ -18,12 +18,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Semaphore;
 
 public class Interface extends Application {
     boolean executado = false;
     List<ListView> listas = new ArrayList<ListView>();
-    ArrayList<String[]> resultados;
     static HashMap<Integer, int []> selecoes = new HashMap<>();
     HashMap<Integer, Integer> numTuplas = new HashMap<>();
     int numeroTabelas = getNumeroTabelas();
@@ -122,9 +120,9 @@ public class Interface extends Application {
         getSelecoes();
 
         if(executado == true){
+            tabelasBuildadas = 0;
             gereciadorBucket.apagaBuckets(numeroTabelas);
             numTuplas.clear();
-            resultados.clear();
             tabela.getItems().clear();
         }
 
@@ -135,13 +133,14 @@ public class Interface extends Application {
            //mostrarDistribuicaoBuckets(i);
        }
        gereciadorBucket.criaThreadProbe();
+       gereciadorBucket.criaThreadProbe();
 
         //gereciadorBucket.setBucketMontagem(false);
 
         executado = true;
 
 
-        //resultados = gereciadorBucket.comparaBuckects(selecoes);
+        //resultados = gereciadorBucket.comparaBuckets(selecoes);
         //gereciadorBucket.limpaMemoria();
         //resultados.trimToSize();
         //data.addAll(resultados);
