@@ -8,12 +8,14 @@ import java.util.concurrent.Semaphore;
 public class GerenciadorBucket {
     //ArrayList<String[]> resultados;
     int limitBucketsMemory = 30;
-    int limitBlockSize = 8192;
+    int limitBlockSize = 16384;
     ArrayList<Bloco> buckets = new ArrayList<>();
     ArrayList<byte[]> bytesArquivos = new ArrayList<>();
     boolean bucketMontagem = false;
     boolean executaProbe = true;
-    BlockingQueue<Integer> filaProbe = new LinkedBlockingDeque<>();
+    boolean bucketCheio = false;
+    BlockingQueue<Integer> filaProbeMemoria = new LinkedBlockingDeque<>();
+    BlockingQueue<Integer> filaProbeDisco = new LinkedBlockingDeque<>();
     HashMap<Integer, Integer> probeTabela1 = new HashMap<>();
     HashMap<Integer, Integer> probeTabela2 = new HashMap<>();
     Semaphore acessoBucket = new Semaphore(1);
@@ -39,19 +41,55 @@ public class GerenciadorBucket {
             @Override
             public void run() {
                 //resultados = new ArrayList<>();
-                System.out.println(this.getName() + ": Iniciando thread de probe...");
+                System.out.println();
+                System.out.println("Iniciando thread de probe...");
                 while(executaProbe) {
                     try {
-                        if(Interface.tabelasBuildadas == 2 && filaProbe.isEmpty()){
-                            //Interface.data.addAll(resultados);
-                            //limpaMemoria();
-                            System.out.println(this.getName() + ": Fim das comparações de buckets...");
+                        if(Interface.tabelasBuildadas == 2 && filaProbeMemoria.isEmpty()){
+                            System.out.println();
+                            System.out.println("Fim das comparações de buckets em memória...");
                             break;
                         }
 
-                        int hash = filaProbe.take();
-                        System.out.println(this.getName() + ": Comparando buckets de hash " + hash);
-                        comparaBuckets(hash);
+                        int hash = filaProbeMemoria.take();
+
+                        try {
+                            acessoBucket.acquire();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+
+                        System.out.println();
+                        System.out.println("Comparando buckets de hash " + hash);
+                        comparaBuckets(hash, "m");
+
+                        acessoBucket.release();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                while(executaProbe) {
+                    try {
+                        if(filaProbeDisco.isEmpty()){
+                            System.out.println();
+                            System.out.println("Fim das comparações de buckets em disco...");
+                            break;
+                        }
+
+                        int hash = filaProbeDisco.take();
+
+                        try {
+                            acessoBucket.acquire();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+
+                        System.out.println();
+                        System.out.println("Comparando buckets de hash " + hash);
+                        comparaBuckets(hash, "d");
+
+                        acessoBucket.release();
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -60,52 +98,48 @@ public class GerenciadorBucket {
         }.start();
     }
 
-    void comparaBuckets(int hash){
+    void comparaBuckets(int hash, String location) {
         boolean bucketEncontrado = false;
         //System.out.println();
         //System.out.println("Iniciando comparações de buckets...");
 
-        try {
-            acessoBucket.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        if (location == "m") {
+            for (int i = 0; i < buckets.size(); i++) {
+                Bloco bucket = buckets.get(i);
 
+                if (bucket.getIdTabela() == 0 && bucket.getId() == hash) {
+                    comparaBucketCorrespondente(Interface.selecoes, bucket);
+                    bucketEncontrado = true;
+                    break;
+                }
+            }
 
-        for(int i = 0; i < buckets.size(); i++){
-            Bloco bucket = buckets.get(i);
+        } else {
 
-            if(bucket.getIdTabela() == 0 && bucket.getId() == hash){
-                comparaBucketCorrespondente(Interface.selecoes, bucket);
-                bucketEncontrado = true;
-                break;
+            byte[] arquivo = getArquivoBytes(0);
+
+            int i = 0;
+
+            while (i < arquivo.length) {
+                if (bucketEncontrado) {
+                    break;
+                }
+
+                byte idContainer = arquivo[i];
+                int idBloco = Bloco.byteToInt(Bloco.getBytes(arquivo, i + 1, 3));
+                Bloco bucket = new Bloco(idBloco, idContainer);
+
+                bucket.dados = Bloco.getBytes(arquivo, i, Bloco.byteToInt(Bloco.getBytes(arquivo, i + 5, 3)));
+
+                if (idBloco == hash) {
+                    comparaBucketCorrespondente(Interface.selecoes, bucket);
+                    break;
+                }
+
+                i += Bloco.byteToInt(Bloco.getBytes(arquivo, i + 5, 3));
             }
         }
 
-        byte[] arquivo = getArquivoBytes(0);
-
-        int i = 0;
-
-        while(i < arquivo.length) {
-            if (bucketEncontrado){
-                break;
-            }
-
-            byte idContainer = arquivo[i];
-            int idBloco = Bloco.byteToInt(Bloco.getBytes(arquivo, i + 1, 3));
-            Bloco bucket = new Bloco(idBloco, idContainer);
-
-            bucket.dados = Bloco.getBytes(arquivo, i, Bloco.byteToInt(Bloco.getBytes(arquivo, i + 5, 3)));
-
-            if(idBloco == hash) {
-                comparaBucketCorrespondente(Interface.selecoes, bucket);
-                break;
-            }
-
-            i += Bloco.byteToInt(Bloco.getBytes(arquivo, i + 5, 3));
-        }
-
-        acessoBucket.release();
         //System.out.println();
         //System.out.println("Fim das comparações de buckets");
 
@@ -267,7 +301,7 @@ public class GerenciadorBucket {
             }
             //se bucket estiver na memoria e com espaco livre
             if (bucket.getIdTabela() == idTabela && bucket.getId() == hash && Bloco.byteToInt(Bloco.getBytes(bucket.dados, 5, 3)) + tupla.length < limitBlockSize) {
-                bucket.adicionarTuplaNoBloco(tupla);
+                bucket.adicionarTuplaNoBlocoCheio(tupla);
                 bucketEncontrado = true;
                 break;
             }
@@ -285,7 +319,11 @@ public class GerenciadorBucket {
                 novoArquivo = Bloco.bytePlusbyte(novoArquivo, bytesBucket, arquivo.length);
                 buckets.remove(i);
                 setArquivoBytes(novoArquivo, idTabela);
+
+                adicionaBucketCorrespondenteNoDisco(idTabela, hash);
+
                 bucketEncontrado = true;
+                bucketCheio = true;
 
                 break;
             }
@@ -321,13 +359,17 @@ public class GerenciadorBucket {
         }
 
         // adiciona na fila de probe
-        if(!filaProbe.contains(hash)) {
-            try {
-                filaProbe.put(hash);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        if(!bucketCheio) {
+            if (!filaProbeMemoria.contains(hash)) {
+                try {
+                    filaProbeMemoria.put(hash);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
+
+        bucketCheio = false;
 
         acessoBucket.release();
     }
@@ -338,6 +380,7 @@ public class GerenciadorBucket {
         } else { // memoria cheia
             int bucketToDelete = getBucketPositionDelete(idTabela);
             Bloco bucket = buckets.get(bucketToDelete);
+            int idBucket = bucket.getId();
             System.out.println();
             System.out.println("Memoria de buckets da tabela " + idTabela + " ficou cheia");
             System.out.println("Bucket " + bucket.getId() + " foi movido para disco");
@@ -352,8 +395,47 @@ public class GerenciadorBucket {
             novoArquivo = Bloco.bytePlusbyte(novoArquivo, bytesBucket, arquivo.length);
             setArquivoBytes(novoArquivo, idTabela);
 
+            adicionaBucketCorrespondenteNoDisco(idTabela, idBucket);
+
+            bucketCheio = true;
+
             buckets.remove(bucketToDelete);
             buckets.add(bucketNovo);
+        }
+    }
+
+    void adicionaBucketCorrespondenteNoDisco(int idTabela, int hash) {
+        if(idTabela == 0){
+            idTabela = 1;
+        } else {
+            idTabela = 0;
+        }
+
+        for (int i = 0; i < buckets.size(); i++ ) {
+            Bloco bucket = buckets.get(i);
+
+            if(bucket.getId() == hash && bucket.getIdTabela() == idTabela) {
+                System.out.println();
+                System.out.println("Bucket correspondente de hash " + hash + " da tabela " + idTabela + " foi movido para disco");
+
+                int bytesUsados = Bloco.byteToInt(Bloco.getBytes(bucket.dados, 5, 3));
+                byte[] bytesBucket = Bloco.getBytes(bucket.dados, 0 , bytesUsados);
+
+                byte[] arquivo = getArquivoBytes(idTabela);
+                byte[] novoArquivo = new byte[arquivo.length + bytesUsados];
+
+                novoArquivo = Bloco.bytePlusbyte(novoArquivo, arquivo, 0);
+                novoArquivo = Bloco.bytePlusbyte(novoArquivo, bytesBucket, arquivo.length);
+                setArquivoBytes(novoArquivo, idTabela);
+
+                buckets.remove(i);
+
+                if(filaProbeMemoria.contains(hash)) {
+                    filaProbeMemoria.remove(hash);
+                }
+
+                filaProbeDisco.add(hash);
+            }
         }
     }
 

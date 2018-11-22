@@ -133,7 +133,6 @@ public class Interface extends Application {
            //mostrarDistribuicaoBuckets(i);
        }
        gereciadorBucket.criaThreadProbe();
-       gereciadorBucket.criaThreadProbe();
 
         //gereciadorBucket.setBucketMontagem(false);
 
