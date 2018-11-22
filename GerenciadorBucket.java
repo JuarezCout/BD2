@@ -4,17 +4,18 @@ import java.util.HashMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 public class GerenciadorBucket {
     //ArrayList<String[]> resultados;
-    int limitBucketsMemory = 30;
-    int limitBlockSize = 16384;
+    int limitBucketsMemory = 20;
+    int limitBlockSize = 16184;
     ArrayList<Bloco> buckets = new ArrayList<>();
     ArrayList<byte[]> bytesArquivos = new ArrayList<>();
     boolean bucketMontagem = false;
     boolean executaProbe = true;
-    boolean bucketCheio = false;
-    BlockingQueue<Integer> filaProbeMemoria = new LinkedBlockingDeque<>();
+    boolean bucketEmDisco = false;
+    BlockingQueue<String> filaProbeMemoria = new LinkedBlockingDeque<>();
     BlockingQueue<Integer> filaProbeDisco = new LinkedBlockingDeque<>();
     HashMap<Integer, Integer> probeTabela1 = new HashMap<>();
     HashMap<Integer, Integer> probeTabela2 = new HashMap<>();
@@ -51,19 +52,21 @@ public class GerenciadorBucket {
                             break;
                         }
 
-                        int hash = filaProbeMemoria.take();
+                        String hash = filaProbeMemoria.poll(50L, TimeUnit.MILLISECONDS);
 
-                        try {
-                            acessoBucket.acquire();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
+                        if(hash != null) {
+                            try {
+                                acessoBucket.acquire();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+
+                            System.out.println();
+                            System.out.println("Comparando buckets de hash " + hash);
+                            comparaBuckets(Integer.valueOf(hash), "m");
+
+                            acessoBucket.release();
                         }
-
-                        System.out.println();
-                        System.out.println("Comparando buckets de hash " + hash);
-                        comparaBuckets(hash, "m");
-
-                        acessoBucket.release();
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -323,7 +326,7 @@ public class GerenciadorBucket {
                 adicionaBucketCorrespondenteNoDisco(idTabela, hash);
 
                 bucketEncontrado = true;
-                bucketCheio = true;
+                bucketEmDisco = true;
 
                 break;
             }
@@ -349,6 +352,16 @@ public class GerenciadorBucket {
                 novoArquivo = Bloco.bytePlusbyte(novoArquivo, parte2, posicaoGravacao + tupla.length);
 
                 setArquivoBytes(novoArquivo, idTabela);
+
+                if (!filaProbeDisco.contains(hash)) {
+                    try {
+                        filaProbeDisco.put(hash);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                bucketEmDisco = true;
             } else { // bucket nao existe
                 System.out.println();
                 System.out.println("Bucket " + hash + " da tabela " + idTabela + " criado");
@@ -359,17 +372,17 @@ public class GerenciadorBucket {
         }
 
         // adiciona na fila de probe
-        if(!bucketCheio) {
+        if(!bucketEmDisco) {
             if (!filaProbeMemoria.contains(hash)) {
                 try {
-                    filaProbeMemoria.put(hash);
+                    filaProbeMemoria.put(String.valueOf(hash));
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
         }
 
-        bucketCheio = false;
+        bucketEmDisco = false;
 
         acessoBucket.release();
     }
@@ -397,7 +410,7 @@ public class GerenciadorBucket {
 
             adicionaBucketCorrespondenteNoDisco(idTabela, idBucket);
 
-            bucketCheio = true;
+            bucketEmDisco = true;
 
             buckets.remove(bucketToDelete);
             buckets.add(bucketNovo);
@@ -405,6 +418,8 @@ public class GerenciadorBucket {
     }
 
     void adicionaBucketCorrespondenteNoDisco(int idTabela, int hash) {
+        boolean bucketEncontrado = false;
+
         if(idTabela == 0){
             idTabela = 1;
         } else {
@@ -430,12 +445,31 @@ public class GerenciadorBucket {
 
                 buckets.remove(i);
 
-                if(filaProbeMemoria.contains(hash)) {
-                    filaProbeMemoria.remove(hash);
+                if(filaProbeMemoria.contains(String.valueOf(hash))) {
+                    filaProbeMemoria.remove(String.valueOf(hash));
                 }
 
                 filaProbeDisco.add(hash);
+                bucketEncontrado = true;
+
+                break;
             }
+        }
+
+        if(!bucketEncontrado){
+            System.out.println();
+            System.out.println("Bucket correspondente de hash " + hash + " da tabela " + idTabela + " foi movido para disco");
+
+            Bloco novoBucket = new Bloco(hash, (byte) idTabela);
+
+            int bytesUsados = Bloco.byteToInt(Bloco.getBytes(novoBucket.dados, 5, 3));
+            byte[] bytesBucket = Bloco.getBytes(novoBucket.dados, 0 , bytesUsados);
+            byte[] arquivo = getArquivoBytes(idTabela);
+            byte[] novoArquivo = new byte[arquivo.length + bytesUsados];
+            novoArquivo = Bloco.bytePlusbyte(novoArquivo, arquivo, 0);
+            novoArquivo = Bloco.bytePlusbyte(novoArquivo, bytesBucket, arquivo.length);
+
+            setArquivoBytes(novoArquivo, idTabela);
         }
     }
 
